@@ -2,11 +2,13 @@ unit uMainForm;
 
 interface
 
+{$I 'sDef.inc'}
+
 {.$DEFINE LOAD_DS}
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExeMod, EncdDecd, MD5, Utils;
+  Dialogs, ExeMod, EncdDecd, MD5, Utils, NxGrid;
 
 function Base64_Decode(cStr: ansistring): ansistring;
 function Base64_Encode(cStr: ansistring): ansistring;
@@ -57,6 +59,8 @@ var
   f1: word;
   l: integer;
 begin
+
+
   Result := DecodeString(cStr);
   exit;
   l := length(cStr);
@@ -95,16 +99,18 @@ begin
   appShow := True;
 
   {$IFDEF LOAD_DS}
-  f := ExtractFilePath(ParamStr(0)) + 'system\include.pse';
+  //f := ExtractFilePath(ParamStr(0)) + 'system\include.pse';
   {$ELSE}
-  f := ParamStr(1);
+  //f := ParamStr(1);
   {$ENDIF}
-
+  f := ExtractFilePath(ParamStr(0)) + 'system\include.pse';
+  if not FileExists(f) then f := ParamStr(1);
 
   if selfEnabled then
   begin
-
+    {$IFDEF SECURITY_ON}
     if (xMD5(selfScript) = selfMD5Hash) then
+    {$ENDIF}
     begin
       __fMain.Button1.Destroy;
       __fMain.MainMenu.Destroy;
@@ -121,7 +127,14 @@ begin
 
       appShow := True;
       //__fMain.Destroy;
-    end;
+    end
+    {$IFDEF SECURITY_ON}{$IFDEF SHOW_DEBUG_MESSAGES}
+      else showmessage('xMD5(selfScript) != selfMD5Hash (wrong md5)' + #13
+        + xMD5(selfScript) + #13 + selfMD5Hash
+      );
+      //showmessage(selfScript);
+    {$ENDIF}{$ENDIF}
+    ;
   end
   else if ExtractFileExt(f) = '.pse' then
   begin
@@ -144,14 +157,17 @@ procedure T__mainForm.FormCreate(Sender: TObject);
 var
   f: string;
   EM: TExeStream;
+  modules : ansistring;
 begin
 
   Self.Left := -999;
   {$IFDEF LOAD_DS}
-  f := ExtractFilePath(ParamStr(0)) + 'system\include.pse';
+  //f := ExtractFilePath(ParamStr(0)) + 'system\include.pse';
   {$ELSE}
-  f := ParamStr(1);
+  //f := ParamStr(1);
   {$ENDIF}
+  f := ExtractFilePath(ParamStr(0)) + 'system\include.pse';
+  if not FileExists(f) then f := ParamStr(1);
 
   selfScript := '';
   EM := TExeStream.Create(ParamStr(0));
@@ -162,23 +178,26 @@ begin
   if DirectoryExists(progDir + 'core\') then
     engineDir := progDir + 'core\';
 
-
   selfScript := EM.ExtractToString('$PHPSOULENGINE\inc.php');
   selfMD5Hash := EM.ExtractToString('$PHPSOULENGINE\inc.php.hash');
   if (selfScript <> '') then
   begin
     //selfScript := myDecode(Base64_Decode(selfScript));
     selfModulesHash := EM.ExtractToString('$PHPSOULENGINE\mods.hash');
-
-    if (xMD5(EM.ExtractToString('$PHPSOULENGINE\mods')) <>
+    modules         := EM.ExtractToString('$PHPSOULENGINE\mods');
+    //{
+    if (sizeof(modules) <> 4) and (xMD5(modules) <>
       selfModulesHash) then
     begin
+      {$IFDEF SHOW_DEBUG_MESSAGES}
+        showmessage('$PHPSOULENGINE\mods wrong md5');
+      {$ENDIF}
       selfMD5Hash := '';
       selfScript := '';
       selfEnabled := True;
       exit;
     end;
-
+     // }
 
     selfModules := TStringList.Create;
     selfModules.Text :=
@@ -228,7 +247,7 @@ procedure T__mainForm.WMHotKey(var Msg: TMessage);
 var
   idHotKey: integer;
   fuModifiers: word;
-  uVirtKey: word; 
+  uVirtKey: word;
 begin
   idHotkey := Msg.wParam;
   fuModifiers := LOWORD(Msg.lParam);

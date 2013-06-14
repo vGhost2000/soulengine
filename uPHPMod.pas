@@ -1,4 +1,4 @@
-unit uPHPMod;
+Ôªøunit uPHPMod;
 
 {$I 'sDef.inc'}
 
@@ -20,8 +20,9 @@ uses
   Graphics, Dialogs, Forms, Variants, uGuiScreen, ComCtrls,
   Controls, Windows, FileCtrl, Buttons, SizeControl, ExtCtrls, Menus,
   StdCtrls, ExeMod, ShellApi, RyMenus, CheckLst, TlHelp32, Utils,
-  Messages, MImage, GifImage, Jpeg, Grids, CaptionedDockTree, Clipbrd,
-
+  Messages, MImage, Vcl.Imaging.GIFImg, Jpeg, Grids, CaptionedDockTree1, Clipbrd,
+                                     //GifImage
+  WideStrUtils,
 
   {$IFDEF MSWINDOWS}
   ActiveX, ShlObj, WinInet,
@@ -47,6 +48,7 @@ function ToObj(Parameters: TFunctionParams; I: integer): TObject; overload;
 function ToComp(V: variant): TComponent;
 function ToCntrl(V: variant): TControl;
 function ToPChar(V: variant): PAnsiChar;
+function ToPWideChar(V: variant): PWideChar;
 procedure SetAsMainForm(aForm: TForm);
 
 
@@ -251,8 +253,8 @@ type
     procedure TSizeCtrlFunctions3Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure PHPEngineScriptError(Sender: TObject; AText: string;
-      AType: integer; AFileName: string; ALineNo: integer);
+{ vGhost    procedure PHPEngineScriptError(Sender: TObject; AText: string;
+      AType: integer; AFileName: string; ALineNo: integer); }
     procedure libScreenFunctions0Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
@@ -1166,6 +1168,11 @@ type
     procedure _TTreeFunctions8Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
+    procedure PHPEngineScriptError(Sender: TObject; AText: AnsiString;
+      AType: Integer; AFileName: AnsiString; ALineNo: Integer);
+    procedure guiFunctions18Execute(Sender: TObject;
+      Parameters: TFunctionParams; var ReturnValue: Variant;
+      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
   private
     { Private declarations }
   public
@@ -1224,6 +1231,7 @@ var
 
   // ApplicationEx: TApplicationEx;
   psvX: TpsvPHP;
+  vGhostCounter : integer = 0;
 
 const
   aNil = -1;
@@ -1301,6 +1309,11 @@ end;
 function ToPChar(V: variant): PAnsiChar;
 begin
   Result := PAnsiChar(ToStr(V));
+end;
+
+function ToPWideChar(V: variant): PWideChar; overload;
+begin
+  Result := PWideChar(ToStr(V));
 end;
 
 function ToStrA(V: variant): ansistring;
@@ -1454,10 +1467,10 @@ end;
 
 function ToObj(Parameters: TFunctionParams; I: integer): TObject; overload;
 begin
-  if Parameters[i].Value = null then
+  if Parameters[i].VValue = null then
     Result := nil
   else
-    Result := ToObj(Parameters[i].Value);
+    Result := ToObj(Parameters[i].VValue);
 end;
 
 function ToComp(V: variant): TComponent;
@@ -1537,11 +1550,25 @@ end;
 
 { TphpMOD }
 
+{
+procedure writeMyFile(S: string);
+var
+  myFile : TextFile;
+  text   : string;
+  i      : Integer;
+begin
+  inc(vGhostCounter);
+  AssignFile(myFile, '11_Test' + inttostr(vGhostCounter) + '.php');
+  ReWrite(myFile);
+  Write(myFile, S);
+  CloseFile(myFile);
+end;}
+
 procedure TphpMOD.RunCode(S: string);
 begin
   if not psvPHP.UseDelimiters then
     S := '<? ' + S;
-
+  //writeMyFile(S);
   psvPHP.RunCode(S);
   S := '';
 end;
@@ -1607,10 +1634,10 @@ procedure TphpMOD.TImageListFunctions1Execute(Sender: TObject;
 begin
   try
     initImageList(Parameters).
-      AddMasked(Graphics.TBitmap(ToObj(Parameters, 1)), Parameters[2].Value);
+      AddMasked(Graphics.TBitmap(ToObj(Parameters, 1)), Parameters[2].VValue);
   except
      { on E : Exception do
-      ShowMessage(E.ClassName+' Ó¯Ë·Í‡ Ò ÒÓÓ·˘ÂÌËÂÏ : '+E.Message); }
+      ShowMessage(E.ClassName+' –æ—à–∏–±–∫–∞ —Å —Å–æ–æ–±—â–µ–Ω–∏–µ–º : '+E.Message); }
     //ReturnValue := false;
   end;
 end;
@@ -1619,7 +1646,7 @@ procedure TphpMOD.TImageListFunctions2Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  initImageList(Parameters).Delete(Parameters[1].Value);
+  initImageList(Parameters).Delete(Parameters[1].VValue);
 end;
 
 procedure TphpMOD.TImageListFunctions3Execute(Sender: TObject;
@@ -1629,7 +1656,7 @@ var
   tmp: Graphics.TBitmap;
 begin
   tmp := Graphics.TBitmap(ToObj(Parameters, 2));
-  ReturnValue := initImageList(Parameters).GetBitmap(Parameters[1].Value, tmp);
+  ReturnValue := initImageList(Parameters).GetBitmap(Parameters[1].VValue, tmp);
 end;
 
 procedure TphpMOD.TPictureLibFunctions0Execute(Sender: TObject;
@@ -1649,7 +1676,7 @@ begin
         P.Assign(PNG);
         PNG.Free;
    end else  }
-  P.LoadFromFile(Parameters[1].Value);
+  P.LoadFromFile(Parameters[1].VValue);
 
   // P.LoadFromFile(Parameters[1].Value);
 end;
@@ -1658,7 +1685,7 @@ procedure TphpMOD.TPictureLibFunctions1Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TPicture(ToObj(Parameters, 0)).SaveToFile(Parameters[1].Value);
+  TPicture(ToObj(Parameters, 0)).SaveToFile(Parameters[1].VValue);
 end;
 
 procedure TphpMOD.TPictureLibFunctions2Execute(Sender: TObject;
@@ -1672,22 +1699,22 @@ procedure TphpMOD.TPictureLibFunctions3Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if FileExists(Parameters[1].Value) then
-    Graphics.TBitmap(ToObj(Parameters, 0)).LoadFromFile(Parameters[1].Value);
+  if FileExists(Parameters[1].VValue) then
+    Graphics.TBitmap(ToObj(Parameters, 0)).LoadFromFile(Parameters[1].VValue);
 end;
 
 procedure TphpMOD.TPictureLibFunctions4Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  Graphics.TBitmap(ToObj(Parameters, 0)).SaveToFile(Parameters[1].Value);
+  Graphics.TBitmap(ToObj(Parameters, 0)).SaveToFile(Parameters[1].VValue);
 end;
 
 procedure TphpMOD.TPictureLibFunctions9Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     Graphics.TBitmap(ToObj(Parameters, 0)).Assign(nil)
   else
   begin
@@ -1711,12 +1738,12 @@ var
   p: TPicture;
   b: Graphics.TBitmap;
 begin
-  if (LowerCase(ExtractFileExt(Parameters[1].Value)) = '.ico') then
-    TIcon(ToObj(Parameters, 0)).LoadFromFile(Parameters[1].Value)
+  if (LowerCase(ExtractFileExt(Parameters[1].VValue)) = '.ico') then
+    TIcon(ToObj(Parameters, 0)).LoadFromFile(Parameters[1].VValue)
   else
   begin
     p := TPicture.Create;
-    p.LoadFromFile(Parameters[1].Value);
+    p.LoadFromFile(Parameters[1].VValue);
     b := Graphics.TBitmap.Create;
     b.PixelFormat := pf32bit;
     b.TransparentMode := tmAuto;
@@ -1739,7 +1766,7 @@ procedure TphpMOD.TPictureLibFunctions7Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TIcon(ToObj(Parameters, 0)).SaveToFile(Parameters[1].Value);
+  TIcon(ToObj(Parameters, 0)).SaveToFile(Parameters[1].VValue);
 end;
 
 procedure TphpMOD.TPictureLibFunctions8Execute(Sender: TObject;
@@ -1765,7 +1792,7 @@ procedure TphpMOD.TSizeCtrlFunctions0Execute(Sender: TObject;
 begin
   try
     sizectrl_Self(Parameters);
-    ReturnValue := sctrl.AddTarget(ToCntrl(Parameters[1].Value));
+    ReturnValue := sctrl.AddTarget(ToCntrl(Parameters[1].VValue));
   except
        { on E : Exception do
         ShowMessage(E.ClassName+': '+E.Message); }
@@ -1778,7 +1805,7 @@ procedure TphpMOD.TSizeCtrlFunctions1Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   sizectrl_Self(Parameters);
-  sctrl.DeleteTarget(ToCntrl(Parameters[1].Value));
+  sctrl.DeleteTarget(ToCntrl(Parameters[1].VValue));
 end;
 
 procedure TphpMOD.TSizeCtrlFunctions2Execute(Sender: TObject;
@@ -1787,10 +1814,10 @@ procedure TphpMOD.TSizeCtrlFunctions2Execute(Sender: TObject;
 begin
   sizectrl_Self(Parameters);
 
-  if Parameters[1].Value = null then
+  if Parameters[1].VValue = null then
     ReturnValue := sctrl.Enabled
   else
-    sctrl.Enabled := Parameters[1].Value;
+    sctrl.Enabled := Parameters[1].VValue;
 end;
 
 procedure TphpMOD.TSizeCtrlFunctions3Execute(Sender: TObject;
@@ -1814,7 +1841,7 @@ procedure TphpMOD.TStreamLibFunctions10Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   initStream(Parameters);
-  tmpST.Position := Parameters[1].Value;
+  tmpST.Position := Parameters[1].VValue;
 end;
 
 procedure TphpMOD.TStreamLibFunctions11Execute(Sender: TObject;
@@ -1830,7 +1857,7 @@ procedure TphpMOD.TStreamLibFunctions12Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   initStream(Parameters);
-  tmpST.Size := Parameters[1].Value;
+  tmpST.Size := Parameters[1].VValue;
 end;
 
 procedure TphpMOD.TStreamLibFunctions13Execute(Sender: TObject;
@@ -1845,7 +1872,7 @@ procedure TphpMOD.TStreamLibFunctions14Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   try
-    ReturnValue := integer(TFileStream.Create(Parameters[0].Value, Parameters[1].Value));
+    ReturnValue := integer(TFileStream.Create(Parameters[0].VValue, Parameters[1].VValue));
   except
      { on E: Exception do
         ShowMessage(e.Message);}
@@ -1878,7 +1905,7 @@ procedure TphpMOD.TStreamLibFunctions17Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TStream(ToObj(Parameters, 0)).WriteComponentRes(Parameters[1].Value,
+  TStream(ToObj(Parameters, 0)).WriteComponentRes(Parameters[1].VValue,
     TComponent(ToObj(Parameters, 2)));
 end;
 
@@ -1908,7 +1935,7 @@ var
   s: string;
 begin
   initStream(Parameters);
-  s := Parameters[1].Value;
+  s := Parameters[1].VValue;
 
   ReturnValue := tmpST.Write(s, Parameters[2].ZendVariable.AsInteger);
 end;
@@ -1918,7 +1945,7 @@ procedure TphpMOD.TStreamLibFunctions3Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   tmpST := TStream(ToObj(Parameters, 0));
-  ReturnValue := tmpST.Seek(Parameters[1].Value, Parameters[2].Value);
+  ReturnValue := tmpST.Seek(Parameters[1].VValue, Parameters[2].VValue);
 end;
 
 procedure TphpMOD.TStreamLibFunctions4Execute(Sender: TObject;
@@ -1940,7 +1967,7 @@ var
   s: string;
 begin
   initStream(Parameters);
-  s := Parameters[1].Value;
+  s := Parameters[1].VValue;
   tmpST.WriteBuffer(s, Parameters[2].ZendVariable.AsInteger);
 end;
 
@@ -1952,7 +1979,7 @@ var
 begin
   initStream(Parameters);
   tmp := TStream(ToObj(Parameters, 1));
-  tmpST.CopyFrom(tmp, Parameters[2].Value);
+  tmpST.CopyFrom(tmp, Parameters[2].VValue);
 end;
 
 procedure TphpMOD.TStreamLibFunctions7Execute(Sender: TObject;
@@ -2002,9 +2029,9 @@ procedure TphpMOD.TStringsLibFunctions2Execute(Sender: TObject;
 var
   O: TObject;
 begin
-  if (Parameters[1].Value = Null) then
+  if (Parameters[1].VValue = Null) then
   begin
-    if Parameters[0].Value = aNil then
+    if Parameters[0].VValue = aNil then
       ReturnValue := Null
     else
     begin
@@ -2020,7 +2047,7 @@ begin
   begin
     O := ToObj(Parameters, 0);
     if o is TCustomListControl then
-      TCustomListControl(O).ItemIndex := Parameters[1].Value;
+      TCustomListControl(O).ItemIndex := Parameters[1].VValue;
   end;
 end;
 
@@ -2028,22 +2055,22 @@ procedure TphpMOD.winApiFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := FindWindow(PChar(ToStr(Parameters[0].Value)), PChar(
-    ToStr(Parameters[1].Value)));
+  ReturnValue := FindWindow(PChar(ToStr(Parameters[0].VValue)), PChar(
+    ToStr(Parameters[1].VValue)));
 end;
 
 procedure TphpMOD.winApiFunctions1Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ShowWindow(Parameters[0].Value, Parameters[1].Value);
+  ReturnValue := ShowWindow(Parameters[0].VValue, Parameters[1].VValue);
 end;
 
 procedure TphpMOD.winApiFunctions2Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := GetKeyState(Parameters[0].Value);
+  ReturnValue := GetKeyState(Parameters[0].VValue);
 end;
 
 function TphpMOD.getVar(aName: ansistring): ansistring;
@@ -2135,7 +2162,7 @@ procedure TphpMOD.guiFunctions3Execute(Sender: TObject; Parameters: TFunctionPar
   var ReturnValue: variant; ZendVar: TZendVariable; TSRMLS_DC: Pointer);
 begin
   ReturnValue := integer(FindGlobalComponent(GetFormFromName(
-    Parameters[0].Value), Parameters[1].Value));
+    Parameters[0].VValue), Parameters[1].VValue));
 end;
 
 procedure TphpMOD.guiFunctions4Execute(Sender: TObject; Parameters: TFunctionParams;
@@ -2143,7 +2170,7 @@ procedure TphpMOD.guiFunctions4Execute(Sender: TObject; Parameters: TFunctionPar
 begin
 
   ReturnValue := integer(TComponent(ToObj(Parameters, 0)).FindComponent(
-    Parameters[1].Value));
+    Parameters[1].VValue));
 end;
 
 procedure TphpMOD.guiFunctions5Execute(Sender: TObject; Parameters: TFunctionParams;
@@ -2156,7 +2183,7 @@ procedure TphpMOD.guiFunctions7Execute(Sender: TObject; Parameters: TFunctionPar
   var ReturnValue: variant; ZendVar: TZendVariable; TSRMLS_DC: Pointer);
 begin
   try
-    ReturnValue := ToComp(Parameters[0].Value).ComponentCount;
+    ReturnValue := ToComp(Parameters[0].VValue).ComponentCount;
   except
     ReturnValue := False;
       {on e: exception do
@@ -2168,7 +2195,7 @@ procedure TphpMOD.guiFunctions8Execute(Sender: TObject; Parameters: TFunctionPar
   var ReturnValue: variant; ZendVar: TZendVariable; TSRMLS_DC: Pointer);
 begin
   try
-    ReturnValue := integer(ToComp(Parameters[0].Value).Components[Parameters[1].Value]);
+    ReturnValue := integer(ToComp(Parameters[0].VValue).Components[Parameters[1].VValue]);
   except
     ReturnValue := False;
       {on e: exception do
@@ -2210,6 +2237,9 @@ procedure TphpMOD.libApplicationFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
+  {$IFDEF SHOW_DEBUG_MESSAGES}
+    showmessage('libApplicationFunctions0Execute Application.Terminate');
+  {$ENDIF}
   Application.Terminate;
 end;
 
@@ -2228,7 +2258,7 @@ var
   v: variant;
 begin
   prop := LowerCase(Parameters[0].ZendVariable.AsString);
-  v := Parameters[1].Value;
+  v := Parameters[1].VValue;
 
   with Application do
   begin
@@ -2305,9 +2335,9 @@ procedure TphpMOD.libApplicationFunctions4Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := Application.MessageBox(PChar(ToStr(Parameters[0].Value)),
-    PChar(ToStr(Parameters[1].Value)),
-    Parameters[2].Value);
+  ReturnValue := Application.MessageBox(PChar(ToStr(Parameters[0].VValue)),
+    PChar(ToStr(Parameters[1].VValue)),
+    Parameters[2].VValue);
 end;
 
 procedure TphpMOD.libApplicationFunctions5Execute(Sender: TObject;
@@ -2316,9 +2346,9 @@ procedure TphpMOD.libApplicationFunctions5Execute(Sender: TObject;
 var
   cm: TComponent;
 begin
-  cm := Application.FindComponent(Parameters[0].Value);
+  cm := Application.FindComponent(Parameters[0].VValue);
   {if not Assigned(cm) then
-    cm := ApplicationEx.FindComponent(Parameters[0].Value); }
+    cm := ApplicationEx.FindComponent(Parameters[0].VValue); }
   ReturnValue := integer(cm);
 end;
 
@@ -2326,7 +2356,7 @@ procedure TphpMOD.libApplicationFunctions6Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  MessageBeep(Parameters[0].Value);
+  MessageBeep(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.libApplicationFunctions7Execute(Sender: TObject;
@@ -2336,7 +2366,7 @@ var
   BTNS: TMsgDlgButtons;
   tmp: cardinal;
 begin
-  tmp := Parameters[2].Value;
+  tmp := Parameters[2].VValue;
   case tmp of
     MB_OK: BTNS := [mbOK];
     MB_OKCANCEL: BTNS := [mbOK, mbCancel];
@@ -2346,7 +2376,7 @@ begin
     MB_RETRYCANCEL: BTNS := [mbRetry, mbCancel];
   end;
 
-  ReturnValue := MessageDlg(Parameters[0].Value, Parameters[1].Value, BTNS, 0);
+  ReturnValue := MessageDlg(Parameters[0].VValue, Parameters[1].VValue, BTNS, 0);
 end;
 
 procedure TphpMOD.libDialogsFunctions0Execute(Sender: TObject;
@@ -2365,7 +2395,7 @@ begin
   except
     ReturnValue := False;
      { on E : Exception do
-      ShowMessage(E.ClassName+' Ó¯Ë·Í‡ Ò ÒÓÓ·˘ÂÌËÂÏ : '+E.Message);  }
+      ShowMessage(E.ClassName+' –æ—à–∏–±–∫–∞ —Å —Å–æ–æ–±—â–µ–Ω–∏–µ–º : '+E.Message);  }
   end;
 end;
 
@@ -2373,14 +2403,14 @@ procedure TphpMOD.libFormsFunctions1Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := Parameters[0].Value;
+  ReturnValue := Parameters[0].VValue;
 end;
 
 procedure TphpMOD.libFormsFunctions2Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  SetFontProp(ToObj(Parameters, 0), Parameters[1].Value, Parameters[2].Value);
+  SetFontProp(ToObj(Parameters, 0), Parameters[1].VValue, Parameters[2].VValue);
 end;
 
 procedure TphpMOD.libFormsFunctions3Execute(Sender: TObject;
@@ -2401,7 +2431,7 @@ procedure TphpMOD.libScreenFunctions1Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := integer(Screen.Forms[Parameters[0].Value]);
+  ReturnValue := integer(Screen.Forms[Parameters[0].VValue]);
 end;
 
 procedure TphpMOD.libScreenFunctions2Execute(Sender: TObject;
@@ -2415,8 +2445,9 @@ end;
 var
   fatal_handler_php: ansistring;
 
-procedure TphpMOD.PHPEngineScriptError(Sender: TObject; AText: string;
-  AType: integer; AFileName: string; ALineNo: integer);
+
+procedure TphpMOD.PHPEngineScriptError(Sender: TObject; AText: AnsiString;
+  AType: integer; AFileName: AnsiString; ALineNo: integer);
 var
   s: string;
   PHP: TpsvPHP;
@@ -2447,6 +2478,8 @@ begin
   end;
 end;
 
+
+
 procedure TphpMOD.PHPLibraryFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
@@ -2459,7 +2492,7 @@ procedure TphpMOD.PHPLibraryFunctions10Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   try
-    TypInfo.SetPropValue(ToObj(Parameters, 0), Parameters[1].Value, Parameters[2].Value);
+    TypInfo.SetPropValue(ToObj(Parameters, 0), Parameters[1].VValue, Parameters[2].VValue);
   except
   end;
 end;
@@ -2472,12 +2505,12 @@ var
   P: TComponentClass;
 begin
   try
-    if Parameters[1].Value = aNil then
+    if Parameters[1].VValue = aNil then
       Owner := Application
     else
-      Owner := ToComp(Parameters[1].Value);
+      Owner := ToComp(Parameters[1].VValue);
 
-    p := TComponentClass(GetClass(Parameters[0].Value));
+    p := TComponentClass(GetClass(Parameters[0].VValue));
 
     if (p <> nil) then
     begin
@@ -2499,14 +2532,14 @@ procedure TphpMOD.PHPLibraryFunctions2Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if (Parameters[1].Value <> Null) then
+  if (Parameters[1].VValue <> Null) then
   begin
-    ToCntrl(Parameters[0].Value).Parent :=
-      ToCntrl(Parameters[1].Value) as TWinControl;
+    ToCntrl(Parameters[0].VValue).Parent :=
+      ToCntrl(Parameters[1].VValue) as TWinControl;
   end
   else
   begin
-    ReturnValue := integer(ToCntrl(Parameters[0].Value).Parent);
+    ReturnValue := integer(ToCntrl(Parameters[0].VValue).Parent);
   end;
 end;
 
@@ -2517,7 +2550,7 @@ var
   o: TObject;
 begin
   try
-    o := ToObj(Parameters[0].Value);
+    o := ToObj(Parameters[0].VValue);
     o.Free;
   except
    {on e: Exception do
@@ -2531,7 +2564,7 @@ procedure TphpMOD.PHPLibraryFunctions4Execute(Sender: TObject;
 begin
   try
 
-    TypInfo.SetPropValue(ToObj(Parameters, 0), Parameters[1].Value, Parameters[2].Value);
+    TypInfo.SetPropValue(ToObj(Parameters, 0), Parameters[1].VValue, Parameters[2].VValue);
   except
   end;
 end;
@@ -2542,8 +2575,8 @@ procedure TphpMOD.PHPLibraryFunctions5Execute(Sender: TObject;
 begin
   try
     if ToObj(Parameters, 0) is TObject then
-      if (GetPropInfo(ToObj(Parameters, 0), Parameters[1].Value) <> nil) then
-        ReturnValue := TypInfo.GetPropValue(ToObj(Parameters, 0), Parameters[1].Value);
+      if (GetPropInfo(ToObj(Parameters, 0), Parameters[1].VValue) <> nil) then
+        ReturnValue := TypInfo.GetPropValue(ToObj(Parameters, 0), Parameters[1].VValue);
   except
     //on E: Exception do
     //Application.MainForm.Caption := E.Message;
@@ -2565,7 +2598,7 @@ begin
     exit;
   end;
 
-  PI := TypInfo.GetPropInfo(o, Parameters[1].Value);
+  PI := TypInfo.GetPropInfo(o, Parameters[1].VValue);
   if PI = nil then
   begin
     ReturnValue := False;
@@ -2579,7 +2612,7 @@ procedure TphpMOD.PHPLibraryFunctions7Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := integer(ToComp(Parameters[0].Value).Owner);
+  ReturnValue := integer(ToComp(Parameters[0].VValue).Owner);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions8Execute(Sender: TObject;
@@ -2587,7 +2620,7 @@ procedure TphpMOD.PHPLibraryFunctions8Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   ReturnValue := integer(ToObj(TypInfo.GetPropValue(
-    ToObj(Parameters, 0), Parameters[1].Value)));
+    ToObj(Parameters, 0), Parameters[1].VValue)));
 end;
 
 procedure TphpMOD.PHPLibraryFunctions9Execute(Sender: TObject;
@@ -2651,7 +2684,7 @@ begin
   ReturnValue :=
     GetPropValue(TFont(integer(
     GetPropValue(ToObj(Parameters, 0), 'Font'))),
-    Parameters[1].Value);
+    Parameters[1].VValue);
 end;
 
 procedure TphpMOD._TSizeCtrlFunctions4Execute(Sender: TObject;
@@ -2665,7 +2698,7 @@ procedure TphpMOD.PHPLibraryFunctions11Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ToObj(Parameters, 0) is TClass(GetClass(Parameters[1].Value));
+  ReturnValue := ToObj(Parameters, 0) is TClass(GetClass(Parameters[1].VValue));
 end;
 
 procedure TphpMOD._TSizeCtrlFunctions5Execute(Sender: TObject;
@@ -2673,7 +2706,7 @@ procedure TphpMOD._TSizeCtrlFunctions5Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   sizectrl_Self(Parameters);
-  sctrl.RegisterControl(ToCntrl(Parameters[1].Value));
+  sctrl.RegisterControl(ToCntrl(Parameters[1].VValue));
 end;
 
 procedure TphpMOD._TSizeCtrlFunctions6Execute(Sender: TObject;
@@ -2681,7 +2714,7 @@ procedure TphpMOD._TSizeCtrlFunctions6Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   sizectrl_Self(Parameters);
-  sctrl.UnRegisterControl(ToCntrl(Parameters[1].Value));
+  sctrl.UnRegisterControl(ToCntrl(Parameters[1].VValue));
 end;
 
 procedure TphpMOD._TSizeCtrlFunctions7Execute(Sender: TObject;
@@ -2715,13 +2748,13 @@ begin
 
   reg := TRegistry(ToObj(Parameters, 0));
 
-  command := Parameters[1].Value;
+  command := Parameters[1].VValue;
 
   //ShowMessage(command);
 
   if (command = 'createkey') then
   begin
-    ReturnValue := reg.CreateKey(Parameters[2].Value);
+    ReturnValue := reg.CreateKey(Parameters[2].VValue);
     exit;
   end;
 
@@ -2733,19 +2766,19 @@ begin
 
   if (command = 'deletekey') then
   begin
-    ReturnValue := reg.DeleteKey(Parameters[2].Value);
+    ReturnValue := reg.DeleteKey(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'deletevalue') then
   begin
-    ReturnValue := reg.DeleteValue(Parameters[2].Value);
+    ReturnValue := reg.DeleteValue(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'getdatasize') then
   begin
-    ReturnValue := reg.GetDataSize(Parameters[2].Value);
+    ReturnValue := reg.GetDataSize(Parameters[2].VValue);
     exit;
   end;
 
@@ -2757,85 +2790,85 @@ begin
 
   if (command = 'loadkey') then
   begin
-    ReturnValue := reg.LoadKey(Parameters[2].Value, Parameters[3].Value);
+    ReturnValue := reg.LoadKey(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 
   if (command = 'keyexists') then
   begin
-    ReturnValue := reg.KeyExists(Parameters[2].Value);
+    ReturnValue := reg.KeyExists(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'openkey') then
   begin
-    ReturnValue := reg.OpenKey(Parameters[2].Value, Parameters[3].Value);
+    ReturnValue := reg.OpenKey(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 
   if (command = 'openkeyreadonly') then
   begin
-    ReturnValue := reg.OpenKeyReadOnly(Parameters[2].Value);
+    ReturnValue := reg.OpenKeyReadOnly(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'readcurrency') then
   begin
-    ReturnValue := reg.ReadCurrency(Parameters[2].Value);
+    ReturnValue := reg.ReadCurrency(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'readbool') then
   begin
-    ReturnValue := reg.ReadBool(Parameters[2].Value);
+    ReturnValue := reg.ReadBool(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'readfloat') then
   begin
-    ReturnValue := reg.ReadFloat(Parameters[2].Value);
+    ReturnValue := reg.ReadFloat(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'readdate') then
   begin
-    ReturnValue := reg.ReadDateTime(Parameters[2].Value);
+    ReturnValue := reg.ReadDateTime(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'readinteger') then
   begin
-    ReturnValue := reg.ReadInteger(Parameters[2].Value);
+    ReturnValue := reg.ReadInteger(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'readstring') then
   begin
-    ReturnValue := reg.ReadString(Parameters[2].Value);
+    ReturnValue := reg.ReadString(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'restorekey') then
   begin
-    ReturnValue := reg.RestoreKey(Parameters[2].Value, Parameters[3].Value);
+    ReturnValue := reg.RestoreKey(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 
   if (command = 'savekey') then
   begin
-    ReturnValue := reg.SaveKey(Parameters[2].Value, Parameters[3].Value);
+    ReturnValue := reg.SaveKey(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 
   if (command = 'unloadkey') then
   begin
-    ReturnValue := reg.UnLoadKey(Parameters[2].Value);
+    ReturnValue := reg.UnLoadKey(Parameters[2].VValue);
     exit;
   end;
 
   if (command = 'valueexists') then
   begin
-    ReturnValue := reg.ValueExists(Parameters[2].Value);
+    ReturnValue := reg.ValueExists(Parameters[2].VValue);
     exit;
   end;
 
@@ -2853,55 +2886,55 @@ begin
 
   if (command = 'lazywrite') then
   begin
-    reg.LazyWrite := Parameters[2].Value;
+    reg.LazyWrite := Parameters[2].VValue;
     exit;
   end;
 
   if (command = 'rootkey') then
   begin
-    reg.RootKey := Parameters[2].Value;
+    reg.RootKey := Parameters[2].VValue;
     exit;
   end;
 
   if (command = 'access') then
   begin
-    reg.Access := Parameters[2].Value;
+    reg.Access := Parameters[2].VValue;
     exit;
   end;
 
   if (command = 'writecurrency') then
   begin
-    reg.WriteCurrency(Parameters[2].Value, Parameters[3].Value);
+    reg.WriteCurrency(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 
   if (command = 'writebool') then
   begin
-    reg.WriteBool(Parameters[2].Value, Parameters[3].Value);
+    reg.WriteBool(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 
   if (command = 'writefloat') then
   begin
-    reg.WriteFloat(Parameters[2].Value, Parameters[3].Value);
+    reg.WriteFloat(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 
   if (command = 'writedate') then
   begin
-    reg.WriteDateTime(Parameters[2].Value, Parameters[3].Value);
+    reg.WriteDateTime(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 
   if (command = 'writestring') then
   begin
-    reg.WriteString(Parameters[2].Value, Parameters[3].Value);
+    reg.WriteString(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 
   if (command = 'writeinteger') then
   begin
-    reg.WriteInteger(Parameters[2].Value, Parameters[3].Value);
+    reg.WriteInteger(Parameters[2].VValue, Parameters[3].VValue);
     exit;
   end;
 end;
@@ -2909,10 +2942,12 @@ end;
 function SetPrivilege(aPrivilegeName: string; aEnabled: boolean): boolean;
 var
   TPPrev, TP: TTokenPrivileges;
-  Token: cardinal;
+  Token: THandle;
   dwRetLen: DWord;
 begin
   Result := False;
+{  OpenProcessToken(ProcessHandle: THandle; DesiredAccess: DWORD;
+  var TokenHandle: THandle): BOOL; stdcall; }
   OpenProcessToken(GetCurrentProcess, TOKEN_ADJUST_PRIVILEGES or TOKEN_QUERY, Token);
   TP.PrivilegeCount := 1;
   if LookupPrivilegeValue(nil, PChar(aPrivilegeName), TP.Privileges[0].LUID) then
@@ -2932,14 +2967,14 @@ procedure TphpMOD.OSApiFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  SetPrivilege(Parameters[0].Value, Parameters[1].Value);
+  SetPrivilege(Parameters[0].VValue, Parameters[1].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions1Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ExitWindowsEx(Parameters[0].Value, Parameters[1].Value);
+  ReturnValue := ExitWindowsEx(Parameters[0].VValue, Parameters[1].VValue);
 end;
 
 procedure WindowsSleep;
@@ -3067,7 +3102,7 @@ procedure TphpMOD.OSApiFunctions31Execute(Sender: TObject;
 var
   res: TPoint;
 begin
-  ClientToScreen(Parameters[0].Value, res);
+  ClientToScreen(Parameters[0].VValue, res);
   ReturnValue := RES.X;
 end;
 
@@ -3077,7 +3112,7 @@ procedure TphpMOD.OSApiFunctions32Execute(Sender: TObject;
 var
   res: TPoint;
 begin
-  ClientToScreen(Parameters[0].Value, res);
+  ClientToScreen(Parameters[0].VValue, res);
   ReturnValue := RES.Y;
 end;
 
@@ -3087,28 +3122,28 @@ procedure TphpMOD.OSApiFunctions3Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := getlocalpath(Parameters[0].Value);
+  ReturnValue := getlocalpath(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions5Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := AddFontResource(ToPChar(Parameters[0].Value));
+  ReturnValue := AddFontResource(ToPWideChar(Parameters[0].VValue));
 end;
 
 procedure TphpMOD.OSApiFunctions6Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := RemoveFontResource(ToPChar(Parameters[0].Value));
+  ReturnValue := RemoveFontResource(ToPWideChar(Parameters[0].VValue));
 end;
 
 procedure TphpMOD.libFormsFunctions5Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[1].Value <> 0 then
+  if Parameters[1].VValue <> 0 then
     TTabSheet(ToObj(Parameters, 0)).PageControl := TPageControl(ToObj(Parameters, 1))
   else
     ReturnValue := integer(TTabSheet(ToObj(Parameters, 0)).PageControl);
@@ -3118,8 +3153,8 @@ procedure TphpMOD.PHPLibraryFunctions12Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ToCntrl(Parameters[0].Value).Repaint;
-  ToCntrl(Parameters[0].Value).Refresh;
+  ToCntrl(Parameters[0].VValue).Repaint;
+  ToCntrl(Parameters[0].VValue).Refresh;
 
 end;
 
@@ -3128,13 +3163,13 @@ procedure TphpMOD.PHPLibraryFunctions13Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 
-  if Parameters[1].Value <> Null then
+  if Parameters[1].VValue <> Null then
   begin
-    TWinControl(ToObj(Parameters[0].Value)).DoubleBuffered := Parameters[1].Value;
+    TWinControl(ToObj(Parameters[0].VValue)).DoubleBuffered := Parameters[1].VValue;
   end
   else
   begin
-    ReturnValue := TWinControl(ToObj(Parameters[0].Value)).DoubleBuffered;
+    ReturnValue := TWinControl(ToObj(Parameters[0].VValue)).DoubleBuffered;
   end;
 end;
 
@@ -3143,8 +3178,8 @@ procedure TphpMOD.winApiFunctions3Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 
-  RegisterHotKey(__mainForm.Handle, Parameters[0].Value, Parameters[1].Value,
-    Parameters[2].Value);
+  RegisterHotKey(__mainForm.Handle, Parameters[0].VValue, Parameters[1].VValue,
+    Parameters[2].VValue);
 end;
 
 procedure TphpMOD._TSizeCtrlFunctions8Execute(Sender: TObject;
@@ -3158,7 +3193,7 @@ procedure TphpMOD._TSizeCtrlFunctions9Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := integer(TSizeCtrl(ToObj(Parameters, 0)).Targets[Parameters[1].Value]);
+  ReturnValue := integer(TSizeCtrl(ToObj(Parameters, 0)).Targets[Parameters[1].VValue]);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions14Execute(Sender: TObject;
@@ -3174,15 +3209,15 @@ begin
   b.Transparent := True;
   try
 
-  {if (LowerCase(ExtractFileExt(Parameters[0].Value))='.png') then
+  {if (LowerCase(ExtractFileExt(Parameters[0].VValue))='.png') then
       begin
          PNG := TPNGObject.Create;
-         PNG.LoadFromFile(Parameters[0].Value);
+         PNG.LoadFromFile(Parameters[0].VValue);
          p.Assign(PNG);
          png.Free;
       end
   else}
-    P.LoadFromFile(Parameters[0].Value);
+    P.LoadFromFile(Parameters[0].VValue);
     b.Width := P.Graphic.Width;
     b.Height := P.Graphic.Height;
     b.Canvas.Draw(0, 0, P.Graphic);
@@ -3210,7 +3245,7 @@ var
 begin
   obj := ToObj(Parameters, 1);
 
-  if (Parameters[0].Value = Null) then
+  if (Parameters[0].VValue = Null) then
     p := nil
   else
     p := TPopupMenu(ToObj(Parameters, 0));
@@ -3272,7 +3307,7 @@ procedure TphpMOD._MenusFunctions1Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TPopupMenu(ToObj(Parameters, 0)).Popup(Parameters[1].Value, Parameters[2].Value);
+  TPopupMenu(ToObj(Parameters, 0)).Popup(Parameters[1].VValue, Parameters[2].VValue);
 
 end;
 
@@ -3287,7 +3322,7 @@ procedure TphpMOD._MenusFunctions3Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := integer(TPopupMenu(ToObj(Parameters, 0)).Items[Parameters[1].Value]);
+  ReturnValue := integer(TPopupMenu(ToObj(Parameters, 0)).Items[Parameters[1].VValue]);
 end;
 
 procedure TphpMOD._MenusFunctions4Execute(Sender: TObject;
@@ -3301,14 +3336,14 @@ procedure TphpMOD._MenusFunctions5Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ShortCutToText(Parameters[0].Value);
+  ReturnValue := ShortCutToText(Parameters[0].VValue);
 end;
 
 procedure TphpMOD._MenusFunctions6Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := integer(TextToShortCut(Parameters[0].Value));
+  ReturnValue := integer(TextToShortCut(Parameters[0].VValue));
 end;
 
 procedure TphpMOD.libFormsFunctions6Execute(Sender: TObject;
@@ -3355,7 +3390,7 @@ procedure TphpMOD.PHPLibraryFunctions17Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ToComp(Parameters[0].Value).ComponentIndex;
+  ReturnValue := ToComp(Parameters[0].VValue).ComponentIndex;
 end;
 
 procedure TphpMOD.libFormsFunctions7Execute(Sender: TObject;
@@ -3363,10 +3398,10 @@ procedure TphpMOD.libFormsFunctions7Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 
-  if (Parameters[1].Value = Null) then
+  if (Parameters[1].VValue = Null) then
     ReturnValue := TForm(ToObj(Parameters, 0)).ModalResult
   else
-    TForm(ToObj(Parameters, 0)).ModalResult := Parameters[1].Value;
+    TForm(ToObj(Parameters, 0)).ModalResult := Parameters[1].VValue;
 
 end;
 
@@ -3377,8 +3412,8 @@ procedure TphpMOD._ExeModFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  Parameters[0].Value := StringReplace(Parameters[0].Value, '/', '\', [rfReplaceAll]);
-  ExeM := TExeStream.Create(Parameters[0].Value);
+  Parameters[0].VValue := StringReplace(Parameters[0].VValue, '/', '\', [rfReplaceAll]);
+  ExeM := TExeStream.Create(Parameters[0].VValue);
 end;
 
 procedure TphpMOD._ExeModFunctions10Execute(Sender: TObject;
@@ -3400,22 +3435,22 @@ procedure TphpMOD._ExeModFunctions2Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ZendVar.AsString := ExeM.ExtractToString(Parameters[0].Value);
-  //ReturnValue := ExeM.ExtractToString(Parameters[0].Value);
+  ZendVar.AsString := ExeM.ExtractToString(Parameters[0].VValue);
+  //ReturnValue := ExeM.ExtractToString(Parameters[0].VValue);
 end;
 
 procedure TphpMOD._ExeModFunctions3Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ExeM.EraseAlias(Parameters[0].Value);
+  ExeM.EraseAlias(Parameters[0].VValue);
 end;
 
 procedure TphpMOD._ExeModFunctions4Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ExeM.SaveAsExe(Parameters[0].Value);
+  ExeM.SaveAsExe(Parameters[0].VValue);
 end;
 
 procedure TphpMOD._ExeModFunctions5Execute(Sender: TObject;
@@ -3427,10 +3462,15 @@ end;
 
 function TempDir: string;
 var
-  Buffer: array[0..1023] of char;
+  tempFolder: array[0..MAX_PATH] of Char;
 begin
-  SetString(Result, Buffer, GetTempPath(Sizeof(Buffer) - 1, Buffer));
+  // vGhost
+  //SetString(Result, Buffer, GetTempPath(Sizeof(Buffer) - 1, Buffer));
+  //Result := 'W:\DS\engine\soulengine\11';
+  GetTempPath(MAX_PATH, @tempFolder);
+  result := StrPas(tempFolder);
 end;
+
 
 procedure TphpMOD.OSApiFunctions7Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
@@ -3443,7 +3483,7 @@ procedure TphpMOD.OSApiFunctions8Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ParamStr(Parameters[0].Value);
+  ReturnValue := ParamStr(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions18Execute(Sender: TObject;
@@ -3503,10 +3543,10 @@ begin
     exit;
   end;
 
-  if (Parameters[1].Value = Null) then
+  if (Parameters[1].VValue = Null) then
     ReturnValue := TControl(ToObj(Parameters, 0)).Visible
   else
-    TControl(ToObj(Parameters, 0)).Visible := Parameters[1].Value;
+    TControl(ToObj(Parameters, 0)).Visible := Parameters[1].VValue;
 end;
 
 procedure TphpMOD.PHPLibraryFunctions20Execute(Sender: TObject;
@@ -3519,10 +3559,10 @@ begin
     exit;
   end;
 
-  if (Parameters[1].Value = Null) then
+  if (Parameters[1].VValue = Null) then
     ReturnValue := TControl(ToObj(Parameters, 0)).Width
   else
-    TControl(ToObj(Parameters, 0)).Width := Parameters[1].Value;
+    TControl(ToObj(Parameters, 0)).Width := Parameters[1].VValue;
 end;
 
 procedure TphpMOD.PHPLibraryFunctions21Execute(Sender: TObject;
@@ -3535,10 +3575,10 @@ begin
     exit;
   end;
 
-  if (Parameters[1].Value = Null) then
+  if (Parameters[1].VValue = Null) then
     ReturnValue := TControl(ToObj(Parameters, 0)).Height
   else
-    TControl(ToObj(Parameters, 0)).Height := Parameters[1].Value;
+    TControl(ToObj(Parameters, 0)).Height := Parameters[1].VValue;
 end;
 
 procedure TphpMOD.PHPLibraryFunctions22Execute(Sender: TObject;
@@ -3554,10 +3594,10 @@ begin
     exit;
   end;
 
-  if (Parameters[1].Value = Null) then
+  if (Parameters[1].VValue = Null) then
     ReturnValue := TControl(ToObj(Parameters, 0)).Left
   else
-    TControl(ToObj(Parameters, 0)).Left := Parameters[1].Value;
+    TControl(ToObj(Parameters, 0)).Left := Parameters[1].VValue;
 end;
 
 procedure TphpMOD.PHPLibraryFunctions23Execute(Sender: TObject;
@@ -3570,10 +3610,10 @@ begin
     exit;
   end;
 
-  if (Parameters[1].Value = Null) then
+  if (Parameters[1].VValue = Null) then
     ReturnValue := TControl(ToObj(Parameters, 0)).Top
   else
-    TControl(ToObj(Parameters, 0)).Top := Parameters[1].Value;
+    TControl(ToObj(Parameters, 0)).Top := Parameters[1].VValue;
 end;
 
 procedure TphpMOD.PHPLibraryFunctions24Execute(Sender: TObject;
@@ -3586,10 +3626,10 @@ begin
     exit;
   end;
 
-  if (Parameters[1].Value = Null) then
+  if (Parameters[1].VValue = Null) then
     ReturnValue := TControl(ToObj(Parameters, 0)).Hint
   else
-    TControl(ToObj(Parameters, 0)).Hint := Parameters[1].Value;
+    TControl(ToObj(Parameters, 0)).Hint := Parameters[1].VValue;
 end;
 
 procedure TphpMOD._TStreamLibFunctions19Execute(Sender: TObject;
@@ -3605,29 +3645,29 @@ procedure TphpMOD._ExeModFunctions6Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  Parameters[1].Value := StringReplace(Parameters[1].Value, '/', '\', [rfReplaceAll]);
-  ExeM.AddFromFile(Parameters[0].Value, Parameters[1].Value);
+  Parameters[1].VValue := StringReplace(Parameters[1].VValue, '/', '\', [rfReplaceAll]);
+  ExeM.AddFromFile(Parameters[0].VValue, Parameters[1].VValue);
 end;
 
 procedure TphpMOD._ExeModFunctions7Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  Parameters[1].Value := StringReplace(Parameters[1].Value, '/', '\', [rfReplaceAll]);
-  ExeM.ExtractToFile(Parameters[0].Value, Parameters[1].Value);
+  Parameters[1].VValue := StringReplace(Parameters[1].VValue, '/', '\', [rfReplaceAll]);
+  ExeM.ExtractToFile(Parameters[0].VValue, Parameters[1].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions9Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ShellExecute(Parameters[0].Value,
+  ShellExecute(Parameters[0].VValue,
 
-    ToPChar(Parameters[1].Value),
-    ToPChar(Parameters[2].Value),
-    ToPChar(Parameters[3].Value),
-    ToPChar(Parameters[4].Value),
-    Parameters[5].Value
+    ToPWideChar(Parameters[1].VValue),
+    ToPWideChar(Parameters[2].VValue),
+    ToPWideChar(Parameters[3].VValue),
+    ToPWideChar(Parameters[4].VValue),
+    Parameters[5].VValue
 
     );
 end;
@@ -3637,7 +3677,7 @@ procedure TphpMOD._TPictureLibFunctions10Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[0].Value = null then
+  if Parameters[0].VValue = null then
     ReturnValue := False
   else
   begin
@@ -3661,7 +3701,7 @@ begin
   if not (l is TListItem) then
     exit;
 
-  c := Parameters[1].Value;
+  c := Parameters[1].VValue;
 
   if c = 'delete' then
     l.Delete
@@ -3687,9 +3727,9 @@ begin
   if not (l is TListItems) then
     exit;
   //TListView
-  c := Parameters[1].Value;
-  v := Parameters[2].Value;
-  v2 := Parameters[3].Value;
+  c := Parameters[1].VValue;
+  v := Parameters[2].VValue;
+  v2 := Parameters[3].VValue;
 
   if c = 'add' then
   begin
@@ -3732,23 +3772,23 @@ procedure TphpMOD.PHPLibraryFunctions28Execute(Sender: TObject;
 var
   s: string;
 begin
-  Parameters[0].Value := StringReplace(Parameters[0].Value, '/', '\', [rfReplaceAll]);
+  Parameters[0].VValue := StringReplace(Parameters[0].VValue, '/', '\', [rfReplaceAll]);
 
-  s := File2String(Parameters[0].Value);
+  s := File2String(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions29Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ToCntrl(Parameters[0].Value).BringToFront;
+  ToCntrl(Parameters[0].VValue).BringToFront;
 end;
 
 procedure TphpMOD.PHPLibraryFunctions30Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ToCntrl(Parameters[0].Value).SendToBack;
+  ToCntrl(Parameters[0].VValue).SendToBack;
 end;
 
 procedure TphpMOD._TListsFunctions2Execute(Sender: TObject;
@@ -3763,8 +3803,8 @@ begin
   if not (l is TListItem) then
     exit;
 
-  c := LowerCase(Parameters[1].Value);
-  v := Parameters[2].Value;
+  c := LowerCase(Parameters[1].VValue);
+  v := Parameters[2].VValue;
 
   if v = Null then
   begin
@@ -3821,7 +3861,7 @@ begin
   try
     ReturnValue := True;
     imageList := TImageList(ToObj(Parameters, 0));
-    Bitmap := Graphics.TBitmap(ToObj(Parameters[1].Value));
+    Bitmap := Graphics.TBitmap(ToObj(Parameters[1].VValue));
     Bitmap.TransparentColor := clWhite;
     Bitmap.Transparent := True;
     with ImageList do
@@ -3831,30 +3871,30 @@ begin
         try
           Temp.Width := Width;
           Temp.Height := Height;
-          Temp.Canvas.Brush.Color := Parameters[2].Value;
+          Temp.Canvas.Brush.Color := Parameters[2].VValue;
           Temp.Canvas.FillRect(Temp.Canvas.ClipRect);
-          // Á‰ÂÒ¸ ÓÒÚ‡‚Ë¯¸ ÚÓÎ¸ÍÓ Ó‰ÌÓÛ ÌÛÊÌÛ˛ ÒÚÓÍÛ
-          //1 ‚‡Ë‡ÌÚ Ò ËÒÍ‡ÊÂÌËÂÏ
+          // –∑–¥–µ—Å—å –æ—Å—Ç–∞–≤–∏—à—å —Ç–æ–ª—å–∫–æ –æ–¥–Ω–æ—É –Ω—É–∂–Ω—É—é —Å—Ç—Ä–æ–∫—É
+          //1 –≤–∞—Ä–∏–∞–Ω—Ç —Å –∏—Å–∫–∞–∂–µ–Ω–∏–µ–º
           //Temp.Canvas.StretchDraw(Bitmap.Canvas.ClipRect, Bitmap);
-          //2 ‚‡Ë‡ÌÚ Ò ˆÂÌÚËÓ‚‡ÌËÂÏ
+          //2 –≤–∞—Ä–∏–∞–Ω—Ç —Å —Ü–µ–Ω—Ç—Ä–∏—Ä–æ–≤–∞–Ω–∏–µ–º
           Temp.Canvas.Draw((Temp.Width - Bitmap.Width) div 2,
             (Temp.Height - Bitmap.Height) div 2, Bitmap);
-          AddMasked(Temp, Parameters[2].Value);
+          AddMasked(Temp, Parameters[2].VValue);
 
         except
           ReturnValue := False;
               {  on E : Exception do
-                ShowMessage(E.ClassName+' Ó¯Ë·Í‡ Ò ÒÓÓ·˘ÂÌËÂÏ : '+E.Message);  }
+                ShowMessage(E.ClassName+' –æ—à–∏–±–∫–∞ —Å —Å–æ–æ–±—â–µ–Ω–∏–µ–º : '+E.Message);  }
         end;
         Temp.Free;
 
       end
       else
-        ImageList.AddMasked(Bitmap, Parameters[2].Value);
+        ImageList.AddMasked(Bitmap, Parameters[2].VValue);
 
   except
       {on E : Exception do
-      ShowMessage(E.ClassName+' Ó¯Ë·Í‡ Ò ÒÓÓ·˘ÂÌËÂÏ : '+E.Message);  }
+      ShowMessage(E.ClassName+' –æ—à–∏–±–∫–∞ —Å —Å–æ–æ–±—â–µ–Ω–∏–µ–º : '+E.Message);  }
     ReturnValue := False;
   end;
 end;
@@ -3868,8 +3908,8 @@ var
   M: TMenu;
 begin
   M := TMenu(ToObj(Parameters, 0));
-  c := Parameters[1].Value;
-  v := Parameters[2].Value;
+  c := Parameters[1].VValue;
+  v := Parameters[2].VValue;
 
   if c = 'add' then
   begin
@@ -3936,21 +3976,21 @@ procedure TphpMOD.PHPLibraryFunctions31Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   ReturnValue := TTabControl(ToObj(Parameters, 0)).IndexOfTabAt(
-    Parameters[1].Value, Parameters[2].Value);
+    Parameters[1].VValue, Parameters[2].VValue);
 end;
 
 procedure TphpMOD._TListsFunctions3Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := TCheckListBox(ToObj(Parameters, 0)).Checked[Parameters[1].Value];
+  ReturnValue := TCheckListBox(ToObj(Parameters, 0)).Checked[Parameters[1].VValue];
 end;
 
 procedure TphpMOD._TListsFunctions4Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TCheckListBox(ToObj(Parameters, 0)).Checked[Parameters[1].Value] := Parameters[2].Value;
+  TCheckListBox(ToObj(Parameters, 0)).Checked[Parameters[1].VValue] := Parameters[2].VValue;
 end;
 
 procedure TphpMOD._TImageListFunctions6Execute(Sender: TObject;
@@ -3971,7 +4011,7 @@ procedure TphpMOD._TImageListFunctions8Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TImageList(ToObj(Parameters, 0)).Insert(Parameters[1].Value,
+  TImageList(ToObj(Parameters, 0)).Insert(Parameters[1].VValue,
     Graphics.TBitmap(ToObj(Parameters, 2)), Graphics.TBitmap(ToObj(Parameters, 3)));
 end;
 
@@ -3979,15 +4019,15 @@ procedure TphpMOD._TImageListFunctions9Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TImageList(ToObj(Parameters, 0)).InsertMasked(Parameters[1].Value,
-    Graphics.TBitmap(ToObj(Parameters, 2)), Parameters[3].Value);
+  TImageList(ToObj(Parameters, 0)).InsertMasked(Parameters[1].VValue,
+    Graphics.TBitmap(ToObj(Parameters, 2)), Parameters[3].VValue);
 end;
 
 procedure TphpMOD._TImageListFunctions10Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TImageList(ToObj(Parameters, 0)).Move(Parameters[1].Value, Parameters[2].Value);
+  TImageList(ToObj(Parameters, 0)).Move(Parameters[1].VValue, Parameters[2].VValue);
 end;
 
 procedure TphpMOD._MenusFunctions9Execute(Sender: TObject;
@@ -4001,15 +4041,15 @@ procedure TphpMOD.libApplicationFunctions8Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  // ApplicationEx.Title := Parameters[0].Value;
-  Application.Title := Parameters[0].Value;
+  // ApplicationEx.Title := Parameters[0].VValue;
+  Application.Title := Parameters[0].VValue;
 end;
 
 procedure TphpMOD.OSApiFunctions10Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  LockWindowUpdate(Parameters[0].Value);
+  LockWindowUpdate(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions11Execute(Sender: TObject;
@@ -4025,8 +4065,8 @@ procedure TphpMOD.OSApiFunctions12Execute(Sender: TObject;
 begin
   ReturnValue :=
 
-    ToCntrl(Parameters[0].Value).Perform(Parameters[1].Value,
-    Parameters[2].Value, Parameters[3].Value);
+    ToCntrl(Parameters[0].VValue).Perform(Parameters[1].VValue,
+    Parameters[2].VValue, Parameters[3].VValue);
 end;
 
 procedure TphpMOD._TListsFunctions5Execute(Sender: TObject;
@@ -4038,8 +4078,8 @@ var
 begin
   l := TListItems(ToObj(Parameters, 0));
   //l.Owner.SelectAll;
-  l.Item[Parameters[1].Value].Selected := Parameters[2].Value;
-  //l.Item[Parameters[1].Value].Focused  := Parameters[2].Value;
+  l.Item[Parameters[1].VValue].Selected := Parameters[2].VValue;
+  //l.Item[Parameters[1].VValue].Focused  := Parameters[2].VValue;
 end;
 
 function ExecuteAndWait(FileName: string; HideApplication: boolean;
@@ -4093,12 +4133,12 @@ var
   Res: longbool;
   Msg: tagMSG;
 
-  function PCharOrNil(const S: ansistring): PAnsiChar;
+  function PCharOrNil(const S: ansistring): PWideChar;
   begin
     if Length(S) = 0 then
       Result := nil
     else
-      Result := PAnsiChar(S);
+      Result := PWideChar(S);
   end;
 
 begin
@@ -4205,18 +4245,18 @@ procedure TphpMOD.OSApiFunctions13Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  Parameters[0].Value := StringReplace(Parameters[0].Value, '/', '\', [rfReplaceAll]);
-  ExecuteAndWait(Parameters[0].Value, Parameters[1].Value, Parameters[2].Value);
+  Parameters[0].VValue := StringReplace(Parameters[0].VValue, '/', '\', [rfReplaceAll]);
+  ExecuteAndWait(Parameters[0].VValue, Parameters[1].VValue, Parameters[2].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions33Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  Parameters[0].Value := StringReplace(Parameters[0].Value, '/', '\', [rfReplaceAll]);
+  Parameters[0].VValue := StringReplace(Parameters[0].VValue, '/', '\', [rfReplaceAll]);
   ExecAndWait3
-  (Parameters[0].Value,
-    Parameters[1].Value);
+  (Parameters[0].VValue,
+    Parameters[1].VValue);
 end;
 
 procedure TphpMOD._TSynEditFunctions0Execute(Sender: TObject;
@@ -4224,10 +4264,10 @@ procedure TphpMOD._TSynEditFunctions0Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 {$IFDEF VS_EDITOR}
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     ReturnValue := TSynEdit(ToObj(Parameters, 0)).CaretX
   else
-    TSynEdit(ToObj(Parameters, 0)).CaretX := Parameters[1].Value;
+    TSynEdit(ToObj(Parameters, 0)).CaretX := Parameters[1].VValue;
 {$ENDIF}
 end;
 
@@ -4236,10 +4276,10 @@ procedure TphpMOD._TSynEditFunctions1Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 {$IFDEF VS_EDITOR}
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     ReturnValue := TSynEdit(ToObj(Parameters, 0)).CaretY
   else
-    TSynEdit(ToObj(Parameters, 0)).CaretY := Parameters[1].Value;
+    TSynEdit(ToObj(Parameters, 0)).CaretY := Parameters[1].VValue;
 {$ENDIF}
 end;
 
@@ -4248,10 +4288,10 @@ procedure TphpMOD._TSynEditFunctions2Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 {$IFDEF VS_EDITOR}
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     ReturnValue := TSynEdit(ToObj(Parameters, 0)).SelStart
   else
-    TSynEdit(ToObj(Parameters, 0)).SelStart := Parameters[1].Value;
+    TSynEdit(ToObj(Parameters, 0)).SelStart := Parameters[1].VValue;
 {$ENDIF}
 end;
 
@@ -4260,10 +4300,10 @@ procedure TphpMOD._TSynEditFunctions3Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 {$IFDEF VS_EDITOR}
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     ReturnValue := TSynEdit(ToObj(Parameters, 0)).SelEnd
   else
-    TSynEdit(ToObj(Parameters, 0)).SelEnd := Parameters[1].Value;
+    TSynEdit(ToObj(Parameters, 0)).SelEnd := Parameters[1].VValue;
 {$ENDIF}
 end;
 
@@ -4272,10 +4312,10 @@ procedure TphpMOD._TSynEditFunctions4Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 {$IFDEF VS_EDITOR}
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     ReturnValue := TSynEdit(ToObj(Parameters, 0)).LineText
   else
-    TSynEdit(ToObj(Parameters, 0)).LineText := Parameters[1].Value;
+    TSynEdit(ToObj(Parameters, 0)).LineText := Parameters[1].VValue;
 {$ENDIF}
 end;
 
@@ -4283,10 +4323,10 @@ procedure TphpMOD._TListsFunctions6Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[2].Value = Null then
-    ReturnValue := TListBox(ToObj(Parameters, 0)).Selected[Parameters[1].Value]
+  if Parameters[2].VValue = Null then
+    ReturnValue := TListBox(ToObj(Parameters, 0)).Selected[Parameters[1].VValue]
   else
-    TListBox(ToObj(Parameters, 0)).Selected[Parameters[1].Value] := Parameters[2].Value;
+    TListBox(ToObj(Parameters, 0)).Selected[Parameters[1].VValue] := Parameters[2].VValue;
 end;
 
 procedure TphpMOD._TListsFunctions7Execute(Sender: TObject;
@@ -4296,7 +4336,7 @@ var
   o: TObject;
 begin
   o := ToObj(Parameters, 0);
-  TStringList(o)[Parameters[1].Value] := Parameters[2].Value;
+  TStringList(o)[Parameters[1].VValue] := Parameters[2].VValue;
 end;
 
 function KillTask(ExeFileName: string): integer;
@@ -4354,7 +4394,7 @@ procedure TphpMOD.OSApiFunctions14Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  KillTask(StringReplace(StringReplace(Parameters[0].Value, '/', '\', []),
+  KillTask(StringReplace(StringReplace(Parameters[0].VValue, '/', '\', []),
     '\\', '\', [rfReplaceAll])
     );
 end;
@@ -4366,7 +4406,7 @@ var
   s: string;
 begin
   ReturnValue := Null;
-  if SelectDirectory(Parameters[0].Value, Parameters[1].Value, s) then
+  if SelectDirectory(Parameters[0].VValue, Parameters[1].VValue, s) then
     ReturnValue := s;
 end;
 
@@ -4376,8 +4416,8 @@ procedure TphpMOD.PHPLibraryFunctions33Execute(Sender: TObject;
 var
   s: string;
 begin
-  Parameters[0].Value := StringReplace(Parameters[0].Value, '/', '\', [rfReplaceAll]);
-  s := File2String(Parameters[0].Value);
+  Parameters[0].VValue := StringReplace(Parameters[0].VValue, '/', '\', [rfReplaceAll]);
+  s := File2String(Parameters[0].VValue);
   RunCode(s);
 end;
 
@@ -4385,7 +4425,7 @@ procedure TphpMOD.libFormsFunctions8Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TForm(ToObj(Parameters, 0)).ScrollBy(Parameters[1].Value, Parameters[2].Value);
+  TForm(ToObj(Parameters, 0)).ScrollBy(Parameters[1].VValue, Parameters[2].VValue);
 end;
 
 procedure TphpMOD.libFormsFunctions9Execute(Sender: TObject;
@@ -4400,7 +4440,7 @@ procedure TphpMOD.PHPLibraryFunctions35Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   try
-    ReturnValue := integer(ToComp(Parameters[0].Value).Owner) = 0;
+    ReturnValue := integer(ToComp(Parameters[0].VValue).Owner) = 0;
   except
     ReturnValue := False;
   end;
@@ -4413,10 +4453,10 @@ var
   cd: TCopyDataStruct;
   s: ansistring;
 begin
-  s := Parameters[1].Value;
+  s := Parameters[1].VValue;
   cd.cbData := Length(s) + 1;
   cd.lpData := PChar(s);
-  SendMessage(Parameters[0].Value,
+  SendMessage(Parameters[0].VValue,
     WM_COPYDATA,
     0,
     LParam(@cd));
@@ -4460,7 +4500,7 @@ procedure TphpMOD.PHPLibraryFunctions36Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ToCntrl(Parameters[0].Value).Invalidate;
+  ToCntrl(Parameters[0].VValue).Invalidate;
 end;
 
 procedure TphpMOD._TPictureLibFunctions12Execute(Sender: TObject;
@@ -4507,14 +4547,14 @@ procedure TphpMOD._MenusFunctions11Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TMenuItem(ToObj(Parameters, 0)).Delete(Parameters[1].Value);
+  TMenuItem(ToObj(Parameters, 0)).Delete(Parameters[1].VValue);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions38Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := FileExists(Parameters[0].Value);
+  ReturnValue := FileExists(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions39Execute(Sender: TObject;
@@ -4522,8 +4562,8 @@ procedure TphpMOD.PHPLibraryFunctions39Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   Application.CancelHint;
-  Application.Hint := Parameters[0].Value;
-  Application.ActivateHint(Point(Parameters[1].Value, Parameters[2].Value));
+  Application.Hint := Parameters[0].VValue;
+  Application.ActivateHint(Point(Parameters[1].VValue, Parameters[2].VValue));
   Application.ShowHint := True;
 end;
 
@@ -4531,14 +4571,14 @@ procedure TphpMOD._CanvasFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TCanvas(ToObj(Parameters, 0)).MoveTo(Parameters[1].Value, Parameters[2].Value);
+  TCanvas(ToObj(Parameters, 0)).MoveTo(Parameters[1].VValue, Parameters[2].VValue);
 end;
 
 procedure TphpMOD._CanvasFunctions1Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TCanvas(ToObj(Parameters, 0)).LineTo(Parameters[1].Value, Parameters[2].Value);
+  TCanvas(ToObj(Parameters, 0)).LineTo(Parameters[1].VValue, Parameters[2].VValue);
 end;
 
 procedure TphpMOD._CanvasFunctions2Execute(Sender: TObject;
@@ -4593,35 +4633,35 @@ procedure TphpMOD.PHPLibraryFunctions40Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := DateToStr(Parameters[0].Value);
+  ReturnValue := DateToStr(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions41Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := StrToDateTime(Parameters[0].Value);
+  ReturnValue := StrToDateTime(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions18Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := GetSystemMetrics(Parameters[0].Value);
+  ReturnValue := GetSystemMetrics(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions19Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := Windows.SetCursorPos(Parameters[0].Value, Parameters[1].Value);
+  ReturnValue := Windows.SetCursorPos(Parameters[0].VValue, Parameters[1].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions20Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := Windows.SetCursor(screen.Cursors[Parameters[0].Value]);
+  ReturnValue := Windows.SetCursor(screen.Cursors[Parameters[0].VValue]);
 end;
 
 procedure TphpMOD.OSApiFunctions21Execute(Sender: TObject;
@@ -4629,7 +4669,7 @@ procedure TphpMOD.OSApiFunctions21Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 
-  ReturnValue := Windows.SetCaretPos(Parameters[0].Value, Parameters[1].Value);
+  ReturnValue := Windows.SetCaretPos(Parameters[0].VValue, Parameters[1].VValue);
 end;
 
 procedure TphpMOD.libDialogsFunctions1Execute(Sender: TObject;
@@ -4658,7 +4698,7 @@ procedure TphpMOD.PHPLibraryFunctions42Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   try
-    if Parameters[1].Value = Null then
+    if Parameters[1].VValue = Null then
       ReturnValue := integer(TPageControl(ToObj(Parameters, 0)).ActivePage)
     else
       TPageControl(ToObj(Parameters, 0)).ActivePage :=
@@ -4680,16 +4720,16 @@ procedure TphpMOD.PHPLibraryFunctions44Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   ReturnValue :=
-    integer(TPageControl(ToObj(Parameters, 0)).Pages[Parameters[1].Value]);
+    integer(TPageControl(ToObj(Parameters, 0)).Pages[Parameters[1].VValue]);
 end;
 
 procedure TphpMOD.OSApiFunctions22Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  mouse_event(Parameters[0].Value, Parameters[1].Value,
-    Parameters[2].Value, Parameters[3].Value,
-    Parameters[4].Value);
+  mouse_event(Parameters[0].VValue, Parameters[1].VValue,
+    Parameters[2].VValue, Parameters[3].VValue,
+    Parameters[4].VValue);
 end;
 
 procedure TphpMOD._TStreamLibFunctions20Execute(Sender: TObject;
@@ -4723,16 +4763,16 @@ procedure TphpMOD.PHPLibraryFunctions45Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := getAbsoluteX(ToCntrl(Parameters[0].Value),
-    ToCntrl(Parameters[1].Value));
+  ReturnValue := getAbsoluteX(ToCntrl(Parameters[0].VValue),
+    ToCntrl(Parameters[1].VValue));
 end;
 
 procedure TphpMOD.PHPLibraryFunctions46Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := getAbsoluteY(ToCntrl(Parameters[0].Value),
-    ToCntrl(Parameters[1].Value));
+  ReturnValue := getAbsoluteY(ToCntrl(Parameters[0].VValue),
+    ToCntrl(Parameters[1].VValue));
 end;
 
 procedure TphpMOD.OSApiFunctions23Execute(Sender: TObject;
@@ -4742,7 +4782,7 @@ var
   res: TPoint;
   ht: pzval;
 begin
-  ClientToScreen(Parameters[0].Value, res);
+  ClientToScreen(Parameters[0].VValue, res);
   new(ht);
   ArrayToHash(['x', 'y'], [res.X, res.Y], ht);
 
@@ -4757,7 +4797,7 @@ var
   res: TPoint;
   ht: pzval;
 begin
-  ClientToScreen(Parameters[0].Value, res);
+  ClientToScreen(Parameters[0].VValue, res);
   new(ht);
   ArrayToHash(['x', 'y'], [res.X, res.Y], ht);
 
@@ -4770,7 +4810,7 @@ procedure TphpMOD._TSizeCtrlFunctions11Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   sizectrl_Self(Parameters);
-  // sctrl.toFront(ToCntrl(Parameters[1].Value));
+  // sctrl.toFront(ToCntrl(Parameters[1].VValue));
 end;
 
 procedure TphpMOD._TSizeCtrlFunctions12Execute(Sender: TObject;
@@ -4778,7 +4818,7 @@ procedure TphpMOD._TSizeCtrlFunctions12Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   sizectrl_Self(Parameters);
-  //sctrl.toBack(ToCntrl(Parameters[1].Value));
+  //sctrl.toBack(ToCntrl(Parameters[1].VValue));
 end;
 
 
@@ -4787,52 +4827,52 @@ procedure TphpMOD._TStringGridFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[3].Value = Null then
-    ReturnValue := TStringGrid(ToObj(Parameters, 0)).Cells[Parameters[1].Value,
-      Parameters[2].Value]
+  if Parameters[3].VValue = Null then
+    ReturnValue := TStringGrid(ToObj(Parameters, 0)).Cells[Parameters[1].VValue,
+      Parameters[2].VValue]
   else
-    TStringGrid(ToObj(Parameters, 0)).Cells[Parameters[1].Value, Parameters[2].Value] :=
-      Parameters[3].Value;
+    TStringGrid(ToObj(Parameters, 0)).Cells[Parameters[1].VValue, Parameters[2].VValue] :=
+      Parameters[3].VValue;
 end;
 
 procedure TphpMOD._TStringGridFunctions1Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     ReturnValue := TStringGrid(ToObj(Parameters, 0)).Col
   else
-    TStringGrid(ToObj(Parameters, 0)).Col := Parameters[1].Value;
+    TStringGrid(ToObj(Parameters, 0)).Col := Parameters[1].VValue;
 end;
 
 procedure TphpMOD._TStringGridFunctions2Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     ReturnValue := TStringGrid(ToObj(Parameters, 0)).Row
   else
-    TStringGrid(ToObj(Parameters, 0)).Row := Parameters[1].Value;
+    TStringGrid(ToObj(Parameters, 0)).Row := Parameters[1].VValue;
 end;
 
 procedure TphpMOD._TStringGridFunctions3Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[2].Value = Null then
-    ReturnValue := TStringGrid(ToObj(Parameters, 0)).Rows[Parameters[1].Value].Text
+  if Parameters[2].VValue = Null then
+    ReturnValue := TStringGrid(ToObj(Parameters, 0)).Rows[Parameters[1].VValue].Text
   else
-    TStringGrid(ToObj(Parameters, 0)).Rows[Parameters[1].Value].Text := Parameters[2].Value;
+    TStringGrid(ToObj(Parameters, 0)).Rows[Parameters[1].VValue].Text := Parameters[2].VValue;
 end;
 
 procedure TphpMOD._TStringGridFunctions4Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[2].Value = Null then
-    ReturnValue := TStringGrid(ToObj(Parameters, 0)).Cols[Parameters[1].Value].Text
+  if Parameters[2].VValue = Null then
+    ReturnValue := TStringGrid(ToObj(Parameters, 0)).Cols[Parameters[1].VValue].Text
   else
-    TStringGrid(ToObj(Parameters, 0)).Cols[Parameters[1].Value].Text := Parameters[2].Value;
+    TStringGrid(ToObj(Parameters, 0)).Cols[Parameters[1].VValue].Text := Parameters[2].VValue;
 end;
 
 procedure TphpMOD._TStringGridFunctions5Execute(Sender: TObject;
@@ -4842,8 +4882,8 @@ var
   r: TGridCoord;
   ht: pzval;
 begin
-  r := TStringGrid(ToObj(Parameters, 0)).MouseCoord(Parameters[1].Value,
-    Parameters[2].Value);
+  r := TStringGrid(ToObj(Parameters, 0)).MouseCoord(Parameters[1].VValue,
+    Parameters[2].VValue);
   new(ht);
   ArrayToHash(['x', 'y'], [r.X, r.Y], ht);
 
@@ -4859,7 +4899,7 @@ var
   ht: pzval;
 begin
   TStringGrid(ToObj(Parameters, 0)).MouseToCell
-  (Parameters[1].Value, Parameters[2].Value, col, row);
+  (Parameters[1].VValue, Parameters[2].VValue, col, row);
 
   new(ht);
   ArrayToHash(['col', 'row'], [col, row], ht);
@@ -4872,22 +4912,22 @@ procedure TphpMOD._TStringGridFunctions7Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[2].Value = Null then
-    ReturnValue := TStringGrid(ToObj(Parameters, 0)).ColWidths[Parameters[1].Value]
+  if Parameters[2].VValue = Null then
+    ReturnValue := TStringGrid(ToObj(Parameters, 0)).ColWidths[Parameters[1].VValue]
   else
-    TStringGrid(ToObj(Parameters, 0)).ColWidths[Parameters[1].Value] :=
-      Parameters[2].Value;
+    TStringGrid(ToObj(Parameters, 0)).ColWidths[Parameters[1].VValue] :=
+      Parameters[2].VValue;
 end;
 
 procedure TphpMOD._TStringGridFunctions8Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[2].Value = Null then
-    ReturnValue := TStringGrid(ToObj(Parameters, 0)).RowHeights[Parameters[1].Value]
+  if Parameters[2].VValue = Null then
+    ReturnValue := TStringGrid(ToObj(Parameters, 0)).RowHeights[Parameters[1].VValue]
   else
-    TStringGrid(ToObj(Parameters, 0)).RowHeights[Parameters[1].Value] :=
-      Parameters[2].Value;
+    TStringGrid(ToObj(Parameters, 0)).RowHeights[Parameters[1].VValue] :=
+      Parameters[2].VValue;
 end;
 
 procedure TphpMOD._CanvasFunctions3Execute(Sender: TObject;
@@ -4901,10 +4941,10 @@ procedure TphpMOD._CanvasFunctions4Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     ReturnValue := integer(TControlCanvas(ToObj(Parameters, 0)).Control)
   else
-    TControlCanvas(ToObj(Parameters, 0)).Control := ToCntrl(Parameters[1].Value);
+    TControlCanvas(ToObj(Parameters, 0)).Control := ToCntrl(Parameters[1].VValue);
 
 end;
 
@@ -4912,7 +4952,7 @@ procedure TphpMOD._CanvasFunctions5Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := TCanvas(ToObj(Parameters, 0)).TextHeight(Parameters[1].Value);
+  ReturnValue := TCanvas(ToObj(Parameters, 0)).TextHeight(Parameters[1].VValue);
 end;
 
 procedure TphpMOD._CanvasFunctions6Execute(Sender: TObject;
@@ -4926,27 +4966,27 @@ procedure TphpMOD._CanvasFunctions7Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := TCanvas(ToObj(Parameters, 0)).TextWidth(Parameters[1].Value);
+  ReturnValue := TCanvas(ToObj(Parameters, 0)).TextWidth(Parameters[1].VValue);
 end;
 
 procedure TphpMOD._CanvasFunctions8Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[3].Value = Null then
-    ReturnValue := TCanvas(ToObj(Parameters, 0)).Pixels[Parameters[1].Value,
-      Parameters[2].Value]
+  if Parameters[3].VValue = Null then
+    ReturnValue := TCanvas(ToObj(Parameters, 0)).Pixels[Parameters[1].VValue,
+      Parameters[2].VValue]
   else
-    TCanvas(ToObj(Parameters, 0)).Pixels[Parameters[1].Value, Parameters[2].Value] :=
-      Parameters[3].Value;
+    TCanvas(ToObj(Parameters, 0)).Pixels[Parameters[1].VValue, Parameters[2].VValue] :=
+      Parameters[3].VValue;
 end;
 
 procedure TphpMOD._CanvasFunctions9Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TCanvas(ToObj(Parameters, 0)).TextOut(Parameters[1].Value, Parameters[2].Value,
-    Parameters[3].Value);
+  TCanvas(ToObj(Parameters, 0)).TextOut(Parameters[1].VValue, Parameters[2].VValue,
+    Parameters[3].VValue);
 end;
 
 procedure TphpMOD._ChromiumFunctions0Execute(Sender: TObject;
@@ -5062,7 +5102,7 @@ var
   isGet: boolean;
 begin
 {$IFDEF ADD_CHROMIUM}
-  isGet := Parameters[2].Value = Null;
+  isGet := Parameters[2].VValue = Null;
   with TChromium(ToObj(Parameters, 0)) do
   begin
     case Parameters[1].ZendVariable.AsInteger of
@@ -5089,9 +5129,9 @@ procedure TphpMOD._DockingFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ToCntrl(Parameters[0].Value).ManualDock(
+  ReturnValue := ToCntrl(Parameters[0].VValue).ManualDock(
     TWinControl(ToObj(Parameters, 1)), nil,
-    Parameters[2].Value);
+    Parameters[2].VValue);
 end;
 
 procedure TphpMOD._DockingFunctions10Execute(Sender: TObject;
@@ -5137,9 +5177,9 @@ procedure TphpMOD._DockingFunctions1Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ToCntrl(Parameters[0].Value).ManualFloat(
-    Rect(Parameters[1].Value, Parameters[2].Value, Parameters[3].Value,
-    Parameters[4].Value));
+  ReturnValue := ToCntrl(Parameters[0].VValue).ManualFloat(
+    Rect(Parameters[1].VValue, Parameters[2].VValue, Parameters[3].VValue,
+    Parameters[4].VValue));
 end;
 
 procedure TphpMOD._DockingFunctions2Execute(Sender: TObject;
@@ -5153,7 +5193,7 @@ procedure TphpMOD._DockingFunctions3Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := integer(TWinControl(ToObj(Parameters, 0)).DockClients[Parameters[1].Value]);
+  ReturnValue := integer(TWinControl(ToObj(Parameters, 0)).DockClients[Parameters[1].VValue]);
 end;
 
 procedure TphpMOD._DockingFunctions4Execute(Sender: TObject;
@@ -5171,7 +5211,7 @@ var
 begin
   m := TMemoryStream.Create;
   TWinControl(ToObj(Parameters, 0)).DockManager.SaveToStream(m);
-  m.SaveToFile(StringReplace(Parameters[1].Value, '/', '\', []));
+  m.SaveToFile(StringReplace(Parameters[1].VValue, '/', '\', []));
   m.Free;
 end;
 
@@ -5182,7 +5222,7 @@ var
   m: TMemoryStream;
 begin
   m := TMemoryStream.Create;
-  m.LoadFromFile(StringReplace(Parameters[1].Value, '/', '\', []));
+  m.LoadFromFile(StringReplace(Parameters[1].VValue, '/', '\', []));
   TWinControl(ToObj(Parameters, 0)).DockManager.LoadFromStream(m);
   m.Free;
 end;
@@ -5199,8 +5239,8 @@ procedure TphpMOD._DockingFunctions8Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   TWinControl(ToObj(Parameters, 0)).Dock(TWinControl(ToObj(Parameters, 1)),
-    Rect(Parameters[2].Value, Parameters[3].Value, Parameters[4].Value,
-    Parameters[5].Value)
+    Rect(Parameters[2].VValue, Parameters[3].VValue, Parameters[4].VValue,
+    Parameters[5].VValue)
 
     );
 end;
@@ -5241,10 +5281,10 @@ procedure TphpMOD._CanvasFunctions13Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   TCanvas(ToObj(Parameters, 0)).Rectangle(
-    Parameters[1].Value,
-    Parameters[2].Value,
-    Parameters[3].Value,
-    Parameters[4].Value);
+    Parameters[1].VValue,
+    Parameters[2].VValue,
+    Parameters[3].VValue,
+    Parameters[4].VValue);
 end;
 
 procedure TphpMOD._CanvasFunctions14Execute(Sender: TObject;
@@ -5252,10 +5292,10 @@ procedure TphpMOD._CanvasFunctions14Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   TControlCanvas(ToObj(Parameters, 0)).Ellipse(
-    Parameters[1].Value,
-    Parameters[2].Value,
-    Parameters[3].Value,
-    Parameters[4].Value);
+    Parameters[1].VValue,
+    Parameters[2].VValue,
+    Parameters[3].VValue,
+    Parameters[4].VValue);
 end;
 
 procedure TphpMOD._CanvasFunctions15Execute(Sender: TObject;
@@ -5276,7 +5316,7 @@ procedure TphpMOD._CanvasFunctions17Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TControlCanvas(ToObj(Parameters, 0)).Draw(Parameters[2].Value, Parameters[3].Value,
+  TControlCanvas(ToObj(Parameters, 0)).Draw(Parameters[2].VValue, Parameters[3].VValue,
     Graphics.TBitmap(ToObj(Parameters, 1)));
 end;
 
@@ -5293,13 +5333,13 @@ end;
 
 procedure CanvasSetTextAngle(c: TCanvas; d: single);
 var
-  LogRec: TLOGFONT; { »ÌÙÓÏ‡ˆËˇ Ó ¯ËÙÚÂ }
+  LogRec: TLOGFONT; { –ò–Ω—Ñ–æ—Ä–º–∞—Ü–∏—è –æ —à—Ä–∏—Ñ—Ç–µ }
 begin
-  {◊ËÚ‡ÂÏ ÚÂÍÛ˘˛˛ ËÌÙ. Ó ¯ËÙÚÂ }
+  {–ß–∏—Ç–∞–µ–º —Ç–µ–∫—É—â—é—é –∏–Ω—Ñ. –æ —à—Ä–∏—Ñ—Ç–µ }
   GetObject(c.Font.Handle, SizeOf(LogRec), Addr(LogRec));
-  { »ÁÏÂÌˇÂÏ Û„ÓÎ }
+  { –ò–∑–º–µ–Ω—è–µ–º —É–≥–æ–ª }
   LogRec.lfEscapement := round(d * 10);
-  { ”ÒÚ‡Ì‡‚ÎË‚‡ÂÏ ÌÓ‚˚Â Ô‡‡ÏÂÚ˚ }
+  { –£—Å—Ç–∞–Ω–∞–≤–ª–∏–≤–∞–µ–º –Ω–æ–≤—ã–µ –ø–∞—Ä–∞–º–µ—Ç—Ä—ã }
   c.Font.Handle := CreateFontIndirect(LogRec);
 end;
 
@@ -5307,7 +5347,7 @@ procedure TphpMOD._CanvasFunctions19Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  CanvasSetTextAngle(TCanvas(ToObj(Parameters, 0)), Parameters[1].Value);
+  CanvasSetTextAngle(TCanvas(ToObj(Parameters, 0)), Parameters[1].VValue);
 end;
 
 procedure TphpMOD._CanvasFunctions20Execute(Sender: TObject;
@@ -5343,7 +5383,7 @@ procedure TphpMOD.PHPLibraryFunctions48Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  IdleEnable := Parameters[0].Value;
+  IdleEnable := Parameters[0].VValue;
 end;
 
 procedure TphpMOD._BackWorkerFunctions1Execute(Sender: TObject;
@@ -5357,10 +5397,10 @@ procedure TphpMOD._BackWorkerFunctions2Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
- {if Parameters[0].Value = Null then
+ {if Parameters[0].VValue = Null then
   ReturnValue := integer( TBackgroundWorker.Create(Application.MainForm) )
  else begin
-  ReturnValue := integer( TBackgroundWorker.Create(ToComp(Parameters[0].Value)) );
+  ReturnValue := integer( TBackgroundWorker.Create(ToComp(Parameters[0].VValue)) );
  end;}
 
 end;
@@ -5369,10 +5409,10 @@ procedure TphpMOD._BackWorkerFunctions3Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[0].Value = null then
+  if Parameters[0].VValue = null then
     ReturnValue := varsStr
   else
-    varsStr := Parameters[0].Value;
+    varsStr := Parameters[0].VValue;
 end;
 
 procedure TphpMOD._BackWorkerFunctions0Execute(Sender: TObject;
@@ -5386,7 +5426,7 @@ procedure TphpMOD._BackWorkerFunctions4Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  threadEngineFile := Parameters[0].Value;
+  threadEngineFile := Parameters[0].VValue;
 end;
 
 procedure TphpMOD._BackWorkerFunctions5Execute(Sender: TObject;
@@ -5402,7 +5442,7 @@ procedure TphpMOD._BackWorkerFunctions6Execute(Sender: TObject;
 var
   x: integer;
 begin
-  x := Parameters[0].Value;
+  x := Parameters[0].VValue;
   ReturnValue := Random(x);
 end;
 
@@ -5411,7 +5451,7 @@ procedure TphpMOD._TSynEditFunctions5Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 {$IFDEF VS_EDITOR}
-  if Parameters[1].Value = True then
+  if Parameters[1].VValue = True then
     TSynCompletionProposal(ToObj(Parameters, 0)).ActivateCompletion
   else
     TSynCompletionProposal(ToObj(Parameters, 0)).CancelCompletion;
@@ -5423,7 +5463,7 @@ procedure TphpMOD._TSynEditFunctions6Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
 {$IFDEF VS_EDITOR}
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
     ReturnValue := integer(TSynCompletionProposal(ToObj(Parameters, 0)).Editor)
   else
     TSynCompletionProposal(ToObj(Parameters, 0)).Editor :=
@@ -5435,7 +5475,7 @@ procedure TphpMOD.PHPLibraryFunctions50Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[1].Value = 2012 then
+  if Parameters[1].VValue = 2012 then
     ZendVar.AsString := (Parameters[0].ZendVariable.AsString)
   else
     ZendVar.AsString := Base64_Encode(Parameters[0].ZendVariable.AsString);
@@ -5447,15 +5487,15 @@ procedure TphpMOD.__WinUtilsFunctions0Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   ReturnValue := libSysTray.showBalloonTip(
-    TCoolTrayIcon(ToObj(Parameters[0].Value)), Parameters[1].Value,
-    Parameters[2].Value, Parameters[3].Value, Parameters[4].Value);
+    TCoolTrayIcon(ToObj(Parameters[0].VValue)), Parameters[1].VValue,
+    Parameters[2].VValue, Parameters[3].VValue, Parameters[4].VValue);
 end;
 
 procedure TphpMOD.__WinUtilsFunctions3Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := libSysTray.hideBalloonTip(TCoolTrayIcon(ToObj(Parameters[0].Value)));
+  ReturnValue := libSysTray.hideBalloonTip(TCoolTrayIcon(ToObj(Parameters[0].VValue)));
 end;
 
 procedure TphpMOD._TSynEditFunctions7Execute(Sender: TObject;
@@ -5467,7 +5507,7 @@ begin
   o := ToObj(Parameters, 0);
 
   if o is TRichEdit then
-    TRichEdit(ToObj(Parameters, 0)).Lines.LoadFromFile(Parameters[1].Value);
+    TRichEdit(ToObj(Parameters, 0)).Lines.LoadFromFile(Parameters[1].VValue);
 end;
 
 procedure TphpMOD._TSynEditFunctions8Execute(Sender: TObject;
@@ -5479,7 +5519,7 @@ begin
   o := ToObj(Parameters, 0);
 
   if o is TRichEdit then
-    TRichEdit(o).Lines.SaveToFile(Parameters[0].Value);
+    TRichEdit(o).Lines.SaveToFile(Parameters[0].VValue);
 end;
 
 procedure TphpMOD._TSynEditFunctions9Execute(Sender: TObject;
@@ -5489,7 +5529,7 @@ var
   m: TMemoryStream;
 begin
 
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
   begin
     m := TMemoryStream.Create;
     TRichEdit(ToObj(Parameters, 0)).Lines.SaveToStream(m);
@@ -5499,7 +5539,7 @@ begin
   else
   begin
     m := nil;
-    String2Stream(Parameters[1].Value, m);
+    String2Stream(Parameters[1].VValue, m);
     TRichEdit(ToObj(Parameters, 0)).Lines.LoadFromStream(m);
     m.Free;
   end;
@@ -5514,9 +5554,9 @@ var
   c: string;
 begin
   r := TRichEdit(ToObj(Parameters, 0));
-  c := LowerCase(Parameters[1].Value);
+  c := LowerCase(Parameters[1].VValue);
 
-  if Parameters[2].Value = Null then
+  if Parameters[2].VValue = Null then
   begin
     if c = 'name' then
       ReturnValue := r.SelAttributes.Name
@@ -5540,17 +5580,17 @@ begin
   begin
 
     if c = 'name' then
-      r.SelAttributes.Name := Parameters[2].Value
+      r.SelAttributes.Name := Parameters[2].VValue
     else if c = 'size' then
-      r.SelAttributes.Size := Parameters[2].Value
+      r.SelAttributes.Size := Parameters[2].VValue
     else if c = 'color' then
-      r.SelAttributes.Color := Parameters[2].Value
+      r.SelAttributes.Color := Parameters[2].VValue
     else if c = 'charset' then
-      r.SelAttributes.Charset := Parameters[2].Value
+      r.SelAttributes.Charset := Parameters[2].VValue
 
     else if c = 'bold' then
     begin
-      if Parameters[2].Value = True then
+      if Parameters[2].VValue = True then
         r.SelAttributes.Style := r.SelAttributes.Style + [fsBold]
       else
         r.SelAttributes.Style := r.SelAttributes.Style - [fsBold];
@@ -5558,7 +5598,7 @@ begin
 
     else if c = 'italic' then
     begin
-      if Parameters[2].Value = True then
+      if Parameters[2].VValue = True then
         r.SelAttributes.Style := r.SelAttributes.Style + [fsItalic]
       else
         r.SelAttributes.Style := r.SelAttributes.Style - [fsItalic];
@@ -5566,7 +5606,7 @@ begin
 
     else if c = 'underline' then
     begin
-      if Parameters[2].Value = True then
+      if Parameters[2].VValue = True then
         r.SelAttributes.Style := r.SelAttributes.Style + [fsUnderline]
       else
         r.SelAttributes.Style := r.SelAttributes.Style - [fsUnderline];
@@ -5574,7 +5614,7 @@ begin
 
     else if c = 'strikeout' then
     begin
-      if Parameters[2].Value = True then
+      if Parameters[2].VValue = True then
         r.SelAttributes.Style := r.SelAttributes.Style + [fsStrikeOut]
       else
         r.SelAttributes.Style := r.SelAttributes.Style - [fsStrikeOut];
@@ -5629,7 +5669,7 @@ procedure TphpMOD.guiFunctions12Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   if ToObj(Parameters, 0) is TWinControl then
-    ReturnValue := integer(TWinControl(ToObj(Parameters, 0)).Controls[Parameters[1].Value])
+    ReturnValue := integer(TWinControl(ToObj(Parameters, 0)).Controls[Parameters[1].VValue])
   else
     ReturnValue := Null;
 end;
@@ -5639,29 +5679,36 @@ procedure TphpMOD.guiFunctions16Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   ReturnValue := GetScrollPos(TWinControl(ToObj(Parameters, 0)).Handle,
-    Parameters[1].Value);
+    Parameters[1].VValue);
 end;
 
 procedure TphpMOD.guiFunctions17Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  SetScrollPos(TWinControl(ToObj(Parameters, 0)).Handle, Parameters[1].Value,
-    Parameters[2].Value, Parameters[1].Value);
+  SetScrollPos(TWinControl(ToObj(Parameters, 0)).Handle, Parameters[1].VValue,
+    Parameters[2].VValue, Parameters[1].VValue);
+end;
+
+procedure TphpMOD.guiFunctions18Execute(Sender: TObject;
+  Parameters: TFunctionParams; var ReturnValue: Variant; ZendVar: TZendVariable;
+  TSRMLS_DC: Pointer);
+begin
+  showmessage( Parameters[0].AsStr );
 end;
 
 procedure TphpMOD.PHPLibraryFunctions54Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  RunCode(Parameters[0].Value);
+  RunCode(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions55Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ToComp(Parameters[0].Value).Name;
+  ReturnValue := ToComp(Parameters[0].VValue).Name;
 end;
 
 procedure TphpMOD.PHPLibraryFunctions56Execute(Sender: TObject;
@@ -5671,8 +5718,8 @@ var
   o: TObject;
   v: variant;
 begin
-  o := ToObj(Parameters[0].Value);
-  v := Parameters[1].Value;
+  o := ToObj(Parameters[0].VValue);
+  v := Parameters[1].VValue;
 
   if v = Null then
   begin
@@ -5750,7 +5797,7 @@ procedure TphpMOD.PHPLibraryFunctions57Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  String2Stream(Parameters[1].Value, TMemoryStream(ToObj(Parameters, 0)));
+  String2Stream(Parameters[1].VValue, TMemoryStream(ToObj(Parameters, 0)));
 end;
 
 procedure TphpMOD._TSynEditFunctions12Execute(Sender: TObject;
@@ -5761,7 +5808,7 @@ var
   v: variant;
 begin
   o := ToObj(Parameters, 0);
-  v := Parameters[1].Value;
+  v := Parameters[1].VValue;
 
   if v = Null then
   begin
@@ -5806,7 +5853,7 @@ var
   v: variant;
 begin
   o := ToObj(Parameters, 0);
-  v := Parameters[1].Value;
+  v := Parameters[1].VValue;
 
   if v = Null then
   begin
@@ -5852,7 +5899,7 @@ var
   v: variant;
 begin
   o := ToObj(Parameters, 0);
-  v := Parameters[1].Value;
+  v := Parameters[1].VValue;
 
   if v = Null then
   begin
@@ -5913,8 +5960,8 @@ procedure TphpMOD.winApiFunctions4Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  keybd_event(Parameters[0].Value, Parameters[1].Value, Parameters[2].Value,
-    Parameters[3].Value);
+  keybd_event(Parameters[0].VValue, Parameters[1].VValue, Parameters[2].VValue,
+    Parameters[3].VValue);
 end;
 
 procedure SimulateKeyDown(Key: byte);
@@ -5969,7 +6016,7 @@ procedure TphpMOD.winApiFunctions5Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  SendKeys(Parameters[0].Value);
+  SendKeys(Parameters[0].VValue);
 end;
 
 procedure TphpMOD._TSynEditFunctions16Execute(Sender: TObject;
@@ -6131,11 +6178,11 @@ var
 begin
   o := ToObj(Parameters, 0);
   if o is TMainMenu then
-    ReturnValue := integer(TMainMenu(o).Items.Find(Parameters[1].Value))
+    ReturnValue := integer(TMainMenu(o).Items.Find(Parameters[1].VValue))
   else if o is TPopupMenu then
-    ReturnValue := integer(TPopupMenu(o).Items.Find(Parameters[1].Value))
+    ReturnValue := integer(TPopupMenu(o).Items.Find(Parameters[1].VValue))
   else if o is TMenuItem then
-    ReturnValue := integer(TMenuItem(o).Find(Parameters[1].Value));
+    ReturnValue := integer(TMenuItem(o).Find(Parameters[1].VValue));
 end;
 
 procedure TphpMOD._MenusFunctions14Execute(Sender: TObject;
@@ -6147,11 +6194,11 @@ begin
   o := ToObj(Parameters, 0);
 
   if o is TMainMenu then
-    TMainMenu(o).Items.Insert(Parameters[1].Value, TMenuItem(ToObj(Parameters, 2)))
+    TMainMenu(o).Items.Insert(Parameters[1].VValue, TMenuItem(ToObj(Parameters, 2)))
   else if o is TPopupMenu then
-    TPopupMenu(o).Items.Insert(Parameters[1].Value, TMenuItem(ToObj(Parameters, 2)))
+    TPopupMenu(o).Items.Insert(Parameters[1].VValue, TMenuItem(ToObj(Parameters, 2)))
   else if o is TMenuItem then
-    TMenuItem(o).Insert(Parameters[1].Value, TMenuItem(ToObj(Parameters, 2)));
+    TMenuItem(o).Insert(Parameters[1].VValue, TMenuItem(ToObj(Parameters, 2)));
 
 end;
 
@@ -6200,7 +6247,7 @@ var
   m: TMemoryStream;
 begin
   m := TMemoryStream(ToObj(Parameters, 1));
-  ExeM.ExtractToStream(Parameters[0].Value, m);
+  ExeM.ExtractToStream(Parameters[0].VValue, m);
 end;
 
 procedure TphpMOD._ExeModFunctions9Execute(Sender: TObject;
@@ -6210,7 +6257,7 @@ var
   m: TMemoryStream;
 begin
   m := TMemoryStream(ToObj(Parameters, 1));
-  ExeM.AddFromStream(Parameters[0].Value, m);
+  ExeM.AddFromStream(Parameters[0].VValue, m);
 end;
 
 procedure TphpMOD._TPictureLibFunctions19Execute(Sender: TObject;
@@ -6242,13 +6289,13 @@ begin
   b := Graphics.TBitmap(ToObj(Parameters, 1));
   b.Transparent := True;
   try
-    P.LoadFromFile(Parameters[0].Value);
+    P.LoadFromFile(Parameters[0].VValue);
 
-    b.Width := P.Graphic.Width + Parameters[2].Value * 2;
+    b.Width := P.Graphic.Width + Parameters[2].VValue * 2;
     ;
-    b.Height := P.Graphic.Height + Parameters[2].Value * 2;
+    b.Height := P.Graphic.Height + Parameters[2].VValue * 2;
     ;
-    b.Canvas.Draw(Parameters[2].Value, Parameters[2].Value, P.Graphic);
+    b.Canvas.Draw(Parameters[2].VValue, Parameters[2].VValue, P.Graphic);
 
     // end;
   except
@@ -6381,7 +6428,7 @@ begin
   bmp.Height := Parameters[2].ZendVariable.AsInteger;
   bmp.Width := Parameters[3].ZendVariable.AsInteger;
 
-  DC := GetDC(0);  //‰ÂÒÍËÔÚÓ ˝Í‡Ì‡
+  DC := GetDC(0);  //–¥–µ—Å–∫—Ä–∏–ø—Ç–æ—Ä —ç–∫—Ä–∞–Ω–∞
   BitBlt(bmp.Canvas.Handle, Parameters[0].ZendVariable.AsInteger,
     Parameters[1].ZendVariable.AsInteger,
     Parameters[2].ZendVariable.AsInteger,
@@ -6433,14 +6480,14 @@ procedure TphpMOD._TStreamLibFunctions21Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TMemoryStream(ToObj(Parameters, 0)).LoadFromFile(Parameters[1].Value);
+  TMemoryStream(ToObj(Parameters, 0)).LoadFromFile(Parameters[1].VValue);
 end;
 
 procedure TphpMOD._TStreamLibFunctions22Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TMemoryStream(ToObj(Parameters, 0)).SaveToFile(Parameters[1].Value);
+  TMemoryStream(ToObj(Parameters, 0)).SaveToFile(Parameters[1].VValue);
 end;
 
 procedure TphpMOD._TStreamLibFunctions23Execute(Sender: TObject;
@@ -6471,7 +6518,7 @@ var
   b: TMemoryStream;
 begin
   b := TMemoryStream.Create;
-  String2Stream(Parameters[1].Value, b);
+  String2Stream(Parameters[1].VValue, b);
   TTreeView(ToObj(Parameters, 0)).LoadFromStream(b);
   b.Free;
 end;
@@ -6510,19 +6557,19 @@ procedure TphpMOD.PHPLibraryFunctions58Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 
 begin
-  if Parameters[0].Value = 'DevelStudio' then
-    ShowMessage('¬ÒÂ ‡‚ÚÓÒÍËÂ Ô‡‚‡ Ì‡ ÔÓ„‡ÏÏÛ DevelStudio'
-      + #13 + 'ÔÂÌ‡‰ÎÂÊ‡Ú:' + #13 + #13 +
-      '‘.».Œ.: «‡ÈˆÂ‚ ƒÏËÚËÈ √ÂÌÌ‡‰¸Â‚Ë˜' + #13 +
-      '√Ó‰ ÓÊ‰ÂÌËˇ: 19 ÒÂÌÚˇ·ˇ 1989 „Ó‰' + #13 +
-      '√ÓÓ‰ ÓÊ‰ÂÌËˇ: “‡¯ÍÂÌÚ (”Á·ÂÍËÒÚ‡Ì)'
+  if Parameters[0].VValue = 'DevelStudio' then
+    ShowMessage('–í—Å–µ –∞–≤—Ç–æ—Ä—Å–∫–∏–µ –ø—Ä–∞–≤–∞ –Ω–∞ –ø—Ä–æ–≥—Ä–∞–º–º—É DevelStudio'
+      + #13 + '–ø—Ä–µ–Ω–∞–¥–ª–µ–∂–∞—Ç:' + #13 + #13 +
+      '–§.–ò.–û.: –ó–∞–π—Ü–µ–≤ –î–º–∏—Ç—Ä–∏–π –ì–µ–Ω–Ω–∞–¥—å–µ–≤–∏—á' + #13 +
+      '–ì–æ–¥ —Ä–æ–∂–¥–µ–Ω–∏—è: 19 —Å–µ–Ω—Ç—è–±—Ä—è 1989 –≥–æ–¥' + #13 +
+      '–ì–æ—Ä–æ–¥ —Ä–æ–∂–¥–µ–Ω–∏—è: –¢–∞—à–∫–µ–Ω—Ç (–£–∑–±–µ–∫–∏—Å—Ç–∞–Ω)'
       )
-  else if Parameters[0].Value = 'SoulEngine' then
-    ShowMessage('¬ÒÂ ‡‚ÚÓÒÍËÂ Ô‡‚‡ Ì‡ ÔÓ„‡ÏÏÛ SoulEngine'
-      + #13 + 'ÔÂÌ‡‰ÎÂÊ‡Ú:' + #13 + #13 +
-      '‘.».Œ.: «‡ÈˆÂ‚ ƒÏËÚËÈ √ÂÌÌ‡‰¸Â‚Ë˜' + #13 +
-      '√Ó‰ ÓÊ‰ÂÌËˇ: 19 ÒÂÌÚˇ·ˇ 1989 „Ó‰' + #13 +
-      '√ÓÓ‰ ÓÊ‰ÂÌËˇ: “‡¯ÍÂÌÚ (”Á·ÂÍËÒÚ‡Ì)'
+  else if Parameters[0].VValue = 'SoulEngine' then
+    ShowMessage('–í—Å–µ –∞–≤—Ç–æ—Ä—Å–∫–∏–µ –ø—Ä–∞–≤–∞ –Ω–∞ –ø—Ä–æ–≥—Ä–∞–º–º—É SoulEngine'
+      + #13 + '–ø—Ä–µ–Ω–∞–¥–ª–µ–∂–∞—Ç:' + #13 + #13 +
+      '–§.–ò.–û.: –ó–∞–π—Ü–µ–≤ –î–º–∏—Ç—Ä–∏–π –ì–µ–Ω–Ω–∞–¥—å–µ–≤–∏—á' + #13 +
+      '–ì–æ–¥ —Ä–æ–∂–¥–µ–Ω–∏—è: 19 —Å–µ–Ω—Ç—è–±—Ä—è 1989 –≥–æ–¥' + #13 +
+      '–ì–æ—Ä–æ–¥ —Ä–æ–∂–¥–µ–Ω–∏—è: –¢–∞—à–∫–µ–Ω—Ç (–£–∑–±–µ–∫–∏—Å—Ç–∞–Ω)'
       );
 end;
 
@@ -6557,7 +6604,7 @@ begin
   t := TTreeView(ToObj(Parameters, 0));
 
   for i := 0 to t.Items.Count - 1 do
-    if (t.Items[i].AbsoluteIndex = Parameters[1].Value) then
+    if (t.Items[i].AbsoluteIndex = Parameters[1].VValue) then
     begin
       t.Select(t.Items[i]);
       ReturnValue := True;
@@ -6581,29 +6628,29 @@ procedure TphpMOD.OSApiFunctions26Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := SendMessage(Parameters[0].Value, Parameters[1].Value,
-    Parameters[2].Value, Parameters[3].Value);
+  ReturnValue := SendMessage(Parameters[0].VValue, Parameters[1].VValue,
+    Parameters[2].VValue, Parameters[3].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions27Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := SetCurrentDir(StringReplace('/', '\', Parameters[0].Value, []));
+  ReturnValue := SetCurrentDir(StringReplace('/', '\', Parameters[0].VValue, []));
 end;
 
 procedure TphpMOD.OSApiFunctions28Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := ExistsTask(Parameters[0].Value);
+  ReturnValue := ExistsTask(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions29Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  SetClipboardText(Application.Handle, Parameters[0].Value);
+  SetClipboardText(Application.Handle, Parameters[0].VValue);
 end;
 
 procedure TphpMOD.libDialogsFunctions2Execute(Sender: TObject;
@@ -6666,7 +6713,7 @@ procedure TphpMOD._BackWorkerFunctions15Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
- {if Parameters[1].Value = Null then
+ {if Parameters[1].VValue = Null then
     ReturnValue := TPHPThread( Parameters[0].ZendVariable.AsInteger ).Priority
   else
     TPHPThread( Parameters[0].ZendVariable.AsInteger ).Priority :=
@@ -6740,7 +6787,7 @@ begin
   Name := Parameters[0].ZendVariable.AsString;
   id := ThreadList.IndexOf(Name);
 
-  if Parameters[1].Value = null then
+  if Parameters[1].VValue = null then
   begin
 
     if id = -1 then
@@ -6828,8 +6875,8 @@ procedure TphpMOD.PHPLibraryFunctions59Execute(Sender: TObject;
 var
   s: string;
 begin
-  Parameters[0].Value := StringReplace(Parameters[0].Value, '/', '\', [rfReplaceAll]);
-  s := (Base64_Decode(File2String(Parameters[0].Value)));
+  Parameters[0].VValue := StringReplace(Parameters[0].VValue, '/', '\', [rfReplaceAll]);
+  s := (Base64_Decode(File2String(Parameters[0].VValue)));
   RunCode(s);
 end;
 
@@ -6844,7 +6891,7 @@ procedure TphpMOD.PHPLibraryFunctions60Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TNonVisual(ToObj(Parameters, 0)).loadFromFile(Parameters[1].Value);
+  TNonVisual(ToObj(Parameters, 0)).loadFromFile(Parameters[1].VValue);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions61Execute(Sender: TObject;
@@ -6858,34 +6905,34 @@ procedure TphpMOD.PHPLibraryFunctions64Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[1].Value = '!#$@$23' then
-    ReturnValue := Base64_Encode(Parameters[0].Value)
+  if Parameters[1].VValue = '!#$@$23' then
+    ReturnValue := Base64_Encode(Parameters[0].VValue)
   else
-    ReturnValue := Parameters[0].Value;
+    ReturnValue := Parameters[0].VValue;
 end;
 
 procedure TphpMOD.PHPLibraryFunctions65Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  if Parameters[1].Value = '!$$@!#!5' then
-    ReturnValue := Base64_Decode(Parameters[0].Value)
+  if Parameters[1].VValue = '!$$@!#!5' then
+    ReturnValue := Base64_Decode(Parameters[0].VValue)
   else
-    ReturnValue := Parameters[0].Value;
+    ReturnValue := Parameters[0].VValue;
 end;
 
 procedure TphpMOD.PHPLibraryFunctions66Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := TimeToStr(Parameters[0].Value);
+  ReturnValue := TimeToStr(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions67Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  ReturnValue := StrToDateTime(Parameters[0].Value);
+  ReturnValue := StrToDateTime(Parameters[0].VValue);
 end;
 
 procedure TphpMOD.PHPLibraryFunctions68Execute(Sender: TObject;
@@ -6906,7 +6953,7 @@ procedure TphpMOD._TStringsLibFunctions4Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 begin
-  TStringList(ToObj(Parameters, 0)).LoadFromFile(Parameters[1].Value);
+  TStringList(ToObj(Parameters, 0)).LoadFromFile(Parameters[1].VValue);
 end;
 
 procedure TphpMOD._TStringsLibFunctions5Execute(Sender: TObject;
@@ -6916,7 +6963,7 @@ var
   o: TObject;
 begin
   o := ToObj(Parameters, 0);
-  TStringList(o)[Parameters[1].Value] := Parameters[2].Value;
+  TStringList(o)[Parameters[1].VValue] := Parameters[2].VValue;
 end;
 
 end.

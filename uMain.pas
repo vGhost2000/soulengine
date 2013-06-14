@@ -9,7 +9,7 @@ uses
   Dialogs, StdCtrls, PHPCustomLibrary, phpLibrary, php4delphi, PHPCommon,
   phpFunctions, ZENDTypes, zendAPI, uPhpEvents,
   ExtCtrls, Menus, ComCtrls, Buttons, ToolWin, SizeControl, ExeMod,
-  AppEvnts, MD5, XPMan, phpAPI, Clipbrd,
+  AppEvnts, MD5, XPMan, phpAPI, Clipbrd, NxGrid,
   core;
 
 function TempDir: string;
@@ -150,8 +150,15 @@ begin
 
   if selfEnabled and (selfPHP5tsSize <> Trunc((FindFileSize('php5ts.dll') * 3) / 4)) then
   begin
-    Application.Terminate;
-    exit;
+    {$IFDEF SECURITY_ON}
+      Application.Terminate;
+      exit;
+    {$ELSE}
+      showmessage('wrong php5ts.dll hash Application.Terminate' + #13 +
+        IntToStr(selfPHP5tsSize) + #13 +
+        IntToStr(Trunc((FindFileSize('php5ts.dll') * 3) / 4))
+      );
+    {$ENDIF}
   end;
 
 
@@ -266,8 +273,8 @@ procedure T__fMain.PHPLibraryFunctions1Execute(Sender: TObject;
 begin
   with phpMod.Variables.Add do
   begin
-    Name := Parameters[0].Value;
-    Value := Parameters[1].Value;
+    Name := Parameters[0].VValue;
+    Value := Parameters[1].VValue;
   end;
 end;
 
@@ -278,7 +285,11 @@ end;
 
 procedure T__fMain.Timer1Timer(Sender: TObject);
 begin
-  Application.Terminate;
+  {$IFDEF SECURITY_ON}
+    Application.Terminate;
+  {$ELSE}
+    showmessage('debug timer Application.Terminate');
+  {$ENDIF}
 end;
 
 

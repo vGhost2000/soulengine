@@ -88,12 +88,12 @@ type
     uFlags: UINT;
     uCallbackMessage: UINT;
     hIcon: HICON;
-    szTip: array[0..127] of AnsiChar;  // Previously 64 chars, now 128
+    szTip: array[0..127] of WideChar;  // Previously 64 chars, now 128
     dwState: DWORD;
     dwStateMask: DWORD;
-    szInfo: array[0..255] of AnsiChar;
+    szInfo: array[0..255] of WideChar;
     TimeoutOrVersion: TTimeoutOrVersion;
-    szInfoTitle: array[0..63] of AnsiChar;
+    szInfoTitle: array[0..63] of WideChar;
     dwInfoFlags: DWORD;
 {$IFDEF _WIN32_IE_600}
     guidItem: TGUID;  // Reserved for WinXP; define _WIN32_IE_600 if needed
@@ -1232,12 +1232,13 @@ begin
     end;
     if (FHint <> '') and (FShowHint) then
     begin
-      StrLCopy(IconData.szTip, PChar(String(FHint)), SizeOf(IconData.szTip)-1);
+      StrLCopy(IconData.szTip, PWideChar(String(FHint)), SizeOf(IconData.szTip)-1);
       { StrLCopy must be used since szTip is only 128 bytes. }
       { From IE ver. 5 szTip is 128 chars, before that only 64 chars. I suppose
         I could use GetComCtlVersion to check the version and then truncate
         the string accordingly, but Windows seems to handle this ok by itself. }
-      IconData.szTip[SizeOf(IconData.szTip)-1] := #0;
+        //vGhost
+      //IconData.szTip[SizeOf(IconData.szTip)-1] := #0;
     end
     else
       IconData.szTip := '';

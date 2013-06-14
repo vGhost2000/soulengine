@@ -3,56 +3,58 @@ unit ExeMod;
 
 }
 
+{$I 'sDef.inc'}
+
 interface
 
 uses
  Windows, SysUtils, Classes, Forms, ShellAPI,
- Dialogs, TypInfo, ZLib, ZLibConst, QStrings;
+ Dialogs, TypInfo, ZLib, ZLibConst, QStrings, md5;
 
   type
   TExeStream = class(TObject)
   private
     FName:String;
-    FFileName: String;
+    FFileName: ansiString;
     function GetACount:Integer;
-    procedure SetFileName(const Value: String);
+    procedure SetFileName(const Value: ansiString);
   public
     constructor Create(FileName:String);
     destructor Destroy;
     procedure ReadData;
 
-    procedure AddStringToExe(Alias,Source:String);
-    procedure AddComponentToExe(Alias: String; OBJ: TComponent);
+    procedure AddStringToExe(Alias,Source:ansiString);
+    procedure AddComponentToExe(Alias: ansiString; OBJ: TComponent);
     procedure AddStreamToExe(Alias:String; Stream:TStream);
     procedure AddFileToExe(Alias,FileName:String);
 
-    procedure AddFromStream(AName: string; AStream: TStream);
-    procedure AddFromFile(AName, AFileName: string);
-    procedure AddFromStrings(AName: string; AStrings: TStrings);
-    procedure AddFromString(AName,S: String);
+    procedure AddFromStream(AName: ansiString; AStream: TStream);
+    procedure AddFromFile(AName, AFileName: ansiString);
+    procedure AddFromStrings(AName: ansiString; AStrings: TStrings);
+    procedure AddFromString(AName,S: ansiString);
 
-    procedure AttachToExe(ExeName: String);
-    procedure ExtractFromExe(ExeName: String);
+    procedure AttachToExe(ExeName: ansiString);
+    procedure ExtractFromExe(ExeName: ansiString);
 
-    function IndexOf(Name: String): Integer;
+    function IndexOf(Name: ansiString): Integer;
 
     procedure ExtractToFile(Alias,FileName:String);
     procedure ExtractToStream(Alias:String; Stream:TMemoryStream);
     procedure ExtractToList(Alias:String; List:TStrings);
     procedure ExtractToStrings(Alias:String; List:TStrings);
-    procedure ExtractToString(const Alias:String; var Source: String); overload;
-    function ExtractToString(AName: String): String; overload;
+    procedure ExtractToString(const Alias: ansiString; var Source: ansiString); overload;
+    function ExtractToString(AName: ansiString): ansiString; overload;
     procedure EraseAlias(Alias:String);
     procedure SaveAsExe(FileName:String);
-    property FileName:String read FFileName write SetFileName;
+    property FileName:ansiString read FFileName write SetFileName;
     property AliasCount:Integer read GetACount;
   end;
 
 
 
 var
- Exe: string;
- _MainExeName: String;
+ Exe: ansiString;
+ _MainExeName: ansiString;
 
 procedure CompressStream(Stream: TStream;
 compressionRate : TCompressionLevel); overload;
@@ -60,17 +62,24 @@ procedure CompressStream( aSource, aTarget : TStream;
 compressionRate : TCompressionLevel ); overload;
 procedure DecompressStream(aSource, aTarget: TStream);
 
-function Stream2String(b: TStream): String; overload;
-procedure Stream2String(b: TStream; var a: String); overload;
-procedure String2Stream(a: String; b: TMemoryStream);
+function Stream2String(b: TStream): ansiString; overload;
+procedure Stream2String(b: TStream; var a: ansiString); overload;
+procedure String2Stream(a: ansiString; b: TMemoryStream);
 procedure Stream2Exe(TempStream: TMemoryStream);
-procedure String2File(String2BeSaved, FileName: string);
+procedure String2File(String2BeSaved, FileName: ansiString);
 procedure Delay(ms: longint);
-function  WinDrv: char;
-function  File2String(FileName: string): string;
+function  WinDrv: ansichar;
+function  File2String(FileName: String): ansiString;
 
 
 implementation
+
+function convertToNormalFileName(S: String): String;
+begin
+  S := StringReplace(S, '$', '_', [rfReplaceAll]);
+  S := StringReplace(S, '\', '_', [rfReplaceAll]);
+  result := StringReplace(S, '/', '_', [rfReplaceAll]);
+end;
 
 
 procedure CompressStream( aSource, aTarget : TStream;
@@ -78,7 +87,7 @@ compressionRate : TCompressionLevel ); overload;
 var comprStream : TCompressionStream; 
 begin 
    // compression level : (clNone, clFastest, clDefault, clMax) 
-   comprStream := TCompressionStream.Create( compressionRate, aTarget ); 
+   comprStream := TCompressionStream.Create( compressionRate, aTarget );
   try 
    comprStream.CopyFrom( aSource, aSource.Size );
    comprStream.CompressionRate; 
@@ -125,9 +134,9 @@ begin
    Application.ProcessMessages;
 end;
 
-function  WinDrv: char;
+function  WinDrv: ansichar;
 var
-  WinDir : String;
+  WinDir : ansiString;
   n      : Integer;
 begin
   SetLength(WinDir,256);
@@ -136,7 +145,7 @@ begin
   Result := WinDir[1];
 end;
 
-procedure String2File(String2BeSaved, FileName: string);
+procedure String2File(String2BeSaved, FileName: ansiString);
 var
  MyStream: TMemoryStream;
 begin
@@ -152,11 +161,12 @@ begin
  end;
 end;
 
-function File2String(FileName: string): string;
+function File2String(FileName: String): ansiString;
 var
  MyStream: TMemoryStream;
- MyString: string;
+ MyString: ansistring;
 begin
+
  MyStream := TMemoryStream.Create;
  try
    MyStream.LoadFromFile(FileName);
@@ -167,9 +177,40 @@ begin
    MyStream.Free;
  end;
  Result := MyString;
-end;
+end; //}
+  {
+var
+  hF : THandle;
+  S : AnsiString; //AnsiString
+  Len, CntRead : Longword;
+begin
+  //showmessage('read file ' + FileName);
+  hF := CreateFile(PChar(FileName), GENERIC_READ, FILE_SHARE_READ,
+    nil, OPEN_EXISTING, 0, 0);
+  if hF = INVALID_HANDLE_VALUE then begin
+    MessageDlg('Не удалось получить доступ к файлу ' + FileName + '.',
+      mtError, [mbOK], 0);
+    Exit;
+  end;
 
-procedure String2Stream(a: String; b: TMemoryStream);
+  //Определяем размер файла.
+  Len := GetFileSize(hF, @Len);
+  //Создаём строку с длиной, равной размеру файла.
+  SetLength(S, Len);
+  try
+    //Чтение данных из файла в область памяти, где расположены текстовые данные строки.
+    ReadFile(hF, Pointer(S)^, Len, CntRead, nil);
+  finally
+    //Закрытие дескриптора файла.
+    CloseHandle(hF);
+  end;
+  Result := S;
+end;
+// }
+
+
+
+procedure String2Stream(a: ansiString; b: TMemoryStream);
 begin
 b.Position := 0;
 b.WriteBuffer(Pointer(a)^,Length(a));
@@ -177,7 +218,7 @@ b.Position := 0;
 end;
 
 
-procedure Stream2String(b: TStream; var a: String); overload;
+procedure Stream2String(b: TStream; var a: ansiString); overload;
 begin
 b.Position := 0;
 SetLength(a,b.Size);
@@ -185,7 +226,7 @@ b.ReadBuffer(Pointer(a)^,b.Size);
 b.Position := 0;
 end;
 
-function Stream2String(b: TStream): String; overload;
+function Stream2String(b: TStream): ansiString; overload;
 begin
  Stream2String(B,Result);
 end;
@@ -197,6 +238,9 @@ begin
    String2File(Exe, 'temp0a0.exe');
    ShellExecute(0, 'open', PChar('temp0a0.exe'),
      PChar('"'+ExtractFilename(_MainExeName)+'"'), nil, SW_SHOW);
+  {$IFDEF SHOW_DEBUG_MESSAGES}
+    showmessage('AlterExe Application.Terminate');
+  {$ENDIF}
    Application.Terminate;
  end;
 end;
@@ -233,7 +277,7 @@ Result := Count;
 end;
 //===================================================
 
-procedure GetDemarcName(DNumber: Integer; var DName: String);
+procedure GetDemarcName(DNumber: Integer; var DName: ansiString);
 var Count,X,Y: Integer;
 begin
 Count := 0;
@@ -272,7 +316,7 @@ If Word2Get < 1 then Exit;
 Result := word(pointer(Hinstance+Word2Get-1)^);
 End;
 
-procedure PeekExeString(StartByte,Count: Integer; var ReturnedStr: String);
+procedure PeekExeString(StartByte,Count: Integer; var ReturnedStr: ansiString);
 var X: Integer;
 Begin
   If StartByte < 1 then Exit;
@@ -282,7 +326,7 @@ Begin
   end;
 End;
 
-procedure PokeExeString(StartByte: Integer; String2Insert: String);
+procedure PokeExeString(StartByte: Integer; String2Insert: ansiString);
 var X: Integer;
 Begin
   If Exe = '' then ReadExe;
@@ -294,7 +338,7 @@ Begin
   end;
 end;
 
-procedure PokeExeStringI(StartByte: Integer; String2Insert: String);
+procedure PokeExeStringI(StartByte: Integer; String2Insert: ansiString);
 var X: Integer;
 Begin
   If Exe = '' then ReadExe;
@@ -311,36 +355,36 @@ procedure PokeExeByte(Byte2set: Integer; ByteVal: Byte);
 Begin
 If Exe = '' then ReadExe;
 If Byte2Set > Length(Exe) then Exit;
-Exe[Byte2Set] := chr(ByteVal);
+Exe[Byte2Set] := ansichar(chr(ByteVal));
 end;
 
 procedure PokeExeByteI(Byte2set: Integer; ByteVal: Byte);
 Begin
 If Exe = '' then ReadExe;
 If Byte2Set > Length(Exe) then Exit;
-Exe[Byte2Set] := chr(ByteVal);
+Exe[Byte2Set] := ansichar(chr(ByteVal));
 AlterExe;
 end;
 
-procedure ExtractFromExe(DemarcStr: string; var ExtractedStr: string);
+procedure ExtractFromExe(DemarcStr: ansiString; var ExtractedStr: ansiString);
 var
  d, e: integer;
 begin
  if Length(Exe) = 0 then ReadExe;
- if Q_PosStr(Q_UpperCase('so!#' + DemarcStr + chr(182)), Exe) > 0 then
+ if AnsiPos(AnsiUpperCase('so!#' + DemarcStr + chr(182)), Exe) > 0 then
  begin
-   d := Q_PosStr(Q_UpperCase('so!#' + DemarcStr + chr(182)), Exe)
-     + length(Q_UpperCase('so!#' + DemarcStr + chr(182)));
+   d := AnsiPos(AnsiUpperCase('so!#' + DemarcStr + chr(182)), Exe)
+     + length(AnsiUpperCase('so!#' + DemarcStr + chr(182)));
 
-   e := Q_PosStr(Q_UpperCase('eo!#' + DemarcStr), Exe);
+   e := AnsiPos(AnsiUpperCase('eo!#' + DemarcStr), Exe);
    ExtractedStr := Copy(Exe, d, e - d);
  end;
 end;
 
-procedure ExtractFromFile(DemarcStr: string; DataFile: string; var ExtractedStr: string);
+procedure ExtractFromFile(DemarcStr: ansiString; DataFile: ansiString; var ExtractedStr: ansiString);
 var
  d, e: integer;
- Temp: String;
+ Temp: ansiString;
 begin
  Temp := File2String(DataFile);
  if Q_PosStr(Q_UpperCase('so!#' + DemarcStr + chr(182)), Temp) > 0 then
@@ -352,9 +396,9 @@ begin
  end;
 end;
 
-procedure DelFromString(DemarcStr: string; var String2Change: string);
+procedure DelFromString(DemarcStr: ansiString; var String2Change: ansiString);
 var
- a, b: string;
+ a, b: ansiString;
 begin
  a := Q_UpperCase('so!#' + DemarcStr + chr(182));
  b := Q_UpperCase('eo!#' + DemarcStr);
@@ -362,24 +406,24 @@ begin
    + length(b) - Q_PosStr(a, String2Change)));
 end;
 
-procedure DelFromExe(DemarcStr: string);
+procedure DelFromExe(DemarcStr: ansiString);
 begin
 If Exe = '' then ReadExe;
 DelFromString(DemarcStr,Exe);
 end;
 
-procedure DelFromFile(DemarcStr, FileName: string);
+procedure DelFromFile(DemarcStr, FileName: ansiString);
 var
- MyString: string;
+ MyString: ansiString;
 begin
  MyString := File2String(FileName);
  DelFromString(DemarcStr, MyString);
  String2File(MyString, FileName);
 end;
 
-procedure Add2File(DemarcStr, FileName, String2Add: string);
+procedure Add2File(DemarcStr, FileName, String2Add: ansiString);
 var
- MyString: string;
+ MyString: ansiString;
 begin
  If DemarcStr = '' then Exit;
  MyString := File2String(FileName);
@@ -388,31 +432,69 @@ begin
  String2File(MyString, FileName);
 end;
 
-procedure ReplaceInFile(DemarcStr, FileName, ReplacementString: string);
+procedure ReplaceInFile(DemarcStr, FileName, ReplacementString: ansiString);
 begin
  If DemarcStr = '' then Exit;
  DelFromFile(DemarcStr, FileName);
  Add2File(DemarcStr, FileName, ReplacementString);
 end;
 
-procedure TackOnFile(DemarcStr, FileName, File2Add: string);
+procedure TackOnFile(DemarcStr, FileName, File2Add: ansiString);
 var
- Mystring: string;
+ Mystring: ansiString;
 begin
  If DemarcStr = '' then Exit;
  MyString := File2String(File2add);
  Add2File(DemarcStr, FileName, MyString);
 end;
 
-procedure Add2String(DemarcStr, String2Add: string; var String2Alter: string);
+var
+  vGhostCounter : integer = 0;
+
+procedure writeMyFile(S: ansiString; name: ansiString);
+var
+  myFile : TextFile;
+  i      : Integer;
+  hFile  : THandle;
+  written: cardinal;
+  utf    : UTF8String;
 begin
- If DemarcStr = '' then Exit;
- String2Alter := String2Alter + q_uppercase('so!#' + DemarcStr + chr(182))
-   + String2Add + q_uppercase('eo!#' + DemarcStr);
+  inc(vGhostCounter);
+  {AssignFile(myFile, '11_Test' + inttostr(vGhostCounter) + '.ex!');
+  ReWrite(myFile);
+  Write(myFile, S);
+  CloseFile(myFile);}
+  hFile := CreateFileW(
+    //PChar('11_Test' + inttostr(vGhostCounter) + '.phpb'),
+    PChar('C:\Users\vGhost\Documents\DevelStudio 3\Project\' + convertToNormalFileName(name) + '.phpb'),
+    GENERIC_WRITE,
+    FILE_SHARE_READ,
+    nil,
+    CREATE_ALWAYS,
+    FILE_ATTRIBUTE_NORMAL,
+    0
+  );
+
+  WriteFile(hFile, S[1], length(S), written, nil);
+  //utf := S;
+  //WriteFile(hFile, utf[1], length(utf), written, nil);
+
+  FileClose(hFile);
 end;
 
-procedure ReplaceInString(DemarcStr, ReplacementString: string;
- var String2Alter: string);
+
+procedure Add2String(DemarcStr, String2Add: ansiString; var String2Alter: ansiString);
+begin
+ If DemarcStr = '' then Exit;
+ //String2Alter := String2Alter + 'vGhost';
+ String2Alter := String2Alter + AnsiUpperCase('so!#' + DemarcStr + #182)
+   + String2Add + AnsiUpperCase('eo!#' + DemarcStr);
+ //showmessage(String2Add);
+ //writeMyFile(String2Add, DemarcStr);
+end;
+
+procedure ReplaceInString(DemarcStr, ReplacementString: ansiString;
+ var String2Alter: ansiString);
 begin
  If DemarcStr = '' then Exit;
  if q_posstr(q_uppercase('so!#' + DemarcStr + chr(182)), String2Alter) = 0 then exit;
@@ -420,7 +502,7 @@ begin
  Add2String(DemarcStr, ReplacementString, String2Alter);
 end;
 
-procedure ReplaceInExe(DemarcStr, ReplacementString: string);
+procedure ReplaceInExe(DemarcStr, ReplacementString: ansiString);
 begin
  If DemarcStr = '' then Exit;
  if q_posstr(q_uppercase('so!#' + DemarcStr + chr(182)), Exe) = 0 then exit;
@@ -428,15 +510,15 @@ begin
  Add2String(DemarcStr, ReplacementString, Exe);
 end;
 
-procedure InsOrReplaceInString(DemarcStr, ReplacementString: string;
- var String2Alter: string);
+procedure InsOrReplaceInString(DemarcStr, ReplacementString: ansiString;
+ var String2Alter: ansiString);
 begin
  If DemarcStr = '' then Exit;
  DelFromString(DemarcStr, String2Alter);
  Add2String(DemarcStr, ReplacementString, String2Alter);
 end;
 
-procedure InsOrReplaceInExe(DemarcStr, ReplacementString: string);
+procedure InsOrReplaceInExe(DemarcStr, ReplacementString: ansiString);
 begin
  If DemarcStr = '' then Exit;
  If Exe = '' Then ReadExe;
@@ -444,9 +526,9 @@ begin
  Add2String(DemarcStr, ReplacementString, Exe);
 end;
 
-procedure ExtractAndStrip(DemarcStr, FileName: string);
+procedure ExtractAndStrip(DemarcStr, FileName: ansiString);
 var
- Temp: string;
+ Temp: ansiString;
 begin
  ExtractFromExe(DemarcStr, Temp);
  if Length(Temp) <> 0 then
@@ -456,21 +538,21 @@ begin
  end;
 end;
 
-procedure Exe2File(FileName: string);
+procedure Exe2File(FileName: ansiString);
 begin
  if Exe = '' then ReadExe;
  String2File(Exe, FileName);
 end;
 
-procedure Extract2File(DemarcStr, FileName: string);
+procedure Extract2File(DemarcStr, FileName: ansiString);
 var
- MyString: string;
+ MyString: ansiString;
 begin
  ExtractFromExe(DemarcStr, MyString);
  if MyString <> '' then String2File(MyString, FileName);
 end;
 
-procedure Add2Exe(DemarcStr, String2Add: string);
+procedure Add2Exe(DemarcStr, String2Add: ansiString);
 begin
  If DemarcStr = '' then Exit;
  if Exe = '' then readExe;
@@ -483,12 +565,15 @@ begin
  TempStream.SaveToFile('temp0a0.exe');
  ShellExecute(0, 'open', PChar('temp0a0.exe'),
    PChar(ExtractFilename(_MainExeName)), nil, SW_SHOW);
+  {$IFDEF SHOW_DEBUG_MESSAGES}
+    showmessage('Stream2Exe Application.Terminate');
+  {$ENDIF}
  Application.Terminate;
 end;
 
-procedure AddFile2Exe(DemarcStr, FileName: string);
+procedure AddFile2Exe(DemarcStr, FileName: ansiString);
 var
- MyString: string;
+ MyString: ansiString;
 begin
  If DemarcStr = '' then Exit;
  MyString := File2String(FileName);
@@ -521,12 +606,12 @@ begin
  Result := GetDemarcCount;
 end;
 
-procedure TExeStream.AddStringToExe(Alias,Source:String);
+procedure TExeStream.AddStringToExe(Alias,Source:ansiString);
 begin
   Add2String(Alias,Source,Exe);
 end;
 
-procedure TExeStream.AddComponentToExe(Alias: String; OBJ: TComponent);
+procedure TExeStream.AddComponentToExe(Alias: ansiString; OBJ: TComponent);
   Var
   M: TMemoryStream;
 begin
@@ -552,14 +637,14 @@ begin
   Exe2File(FileName);
 end;
 
-procedure TExeStream.ExtractToString(const Alias:String; var Source:String);
+procedure TExeStream.ExtractToString(const Alias: ansiString; var Source: ansiString);
 begin
  ExeMod.ExtractFromExe(Alias,Source);
 end;
 
 procedure TExeStream.ExtractToFile(Alias,FileName:String);
   Var
-  tmp: String;
+  tmp: ansiString;
 begin
 If not DirectoryExists(ExtractFileDir(FileName)) then
  ForceDirectories(ExtractFileDir(FileName));
@@ -570,7 +655,7 @@ end;
 
 procedure TExeStream.ExtractToStream(Alias:String; Stream:TMemoryStream);
  Var
-  tmp: String;
+  tmp: ansiString;
 begin
  ExeMod.ExtractFromExe(Alias,tmp);
  String2Stream(tmp, Stream);
@@ -579,7 +664,7 @@ end;
 
 procedure TExeStream.ExtractToList(Alias:String; List:TStrings);
   Var
-  S: String;
+  S: ansiString;
 begin
 ExeMod.ExtractFromExe(Alias,S);
   List.Text := S;
@@ -591,47 +676,53 @@ begin
   DelFromExe(Alias);
 end;
 
-procedure TExeStream.SetFileName(const Value: String);
+procedure TExeStream.SetFileName(const Value: ansiString);
 begin
   FFileName := Value;
   _MainExeName := Value;
   ReadExe;
 end;
 
-procedure TExeStream.AddFromFile(AName, AFileName: string);
+procedure TExeStream.AddFromFile(AName, AFileName: ansiString);
 begin
  Self.AddFileToExe(AName,AFileName);
 end;
 
-procedure TExeStream.AddFromStream(AName: string; AStream: TStream);
+procedure TExeStream.AddFromStream(AName: ansiString; AStream: TStream);
 begin
  Self.AddStreamToExe(AName,AStream);
 end;
 
-procedure TExeStream.AddFromString(AName, S: String);
+procedure TExeStream.AddFromString(AName, S: ansiString);
 begin
  Self.AddStringToExe(AName,S);
 end;
 
-procedure TExeStream.AddFromStrings(AName: string; AStrings: TStrings);
+procedure TExeStream.AddFromStrings(AName: ansiString; AStrings: TStrings);
 begin
  Self.AddStringToExe(AName,AStrings.Text);
 end;
 
-procedure TExeStream.AttachToExe(ExeName: String);
+procedure TExeStream.AttachToExe(ExeName: ansiString);
 begin
  SaveAsExe(ExeName);
 end;
 
-procedure TExeStream.ExtractFromExe(ExeName: String);
+procedure TExeStream.ExtractFromExe(ExeName: ansiString);
 begin
  FileName := ExeName;
  ReadExe;
 end;
 
-function TExeStream.ExtractToString(AName: String): String;
+function TExeStream.ExtractToString(AName: ansiString): ansiString;
+var
+  f: string;
 begin
-  Self.ExtractToString(AName,Result);
+  f := ExtractFilePath(ParamStr(0)) + convertToNormalFileName(AName) + '.phpb';
+  if FileExists(f) then
+    Result := File2String(f)
+  else
+    Self.ExtractToString(AName,Result);
 end;
 
 procedure TExeStream.ExtractToStrings(Alias: String; List: TStrings);
@@ -639,10 +730,10 @@ begin
  ExtractToList(Alias,List);
 end;
 
-function TExeStream.IndexOf(Name: String): Integer;
+function TExeStream.IndexOf(Name: ansiString): Integer;
   Var
   Len: Integer;
-  S: String;
+  S: ansiString;
 begin
   Len := AliasCount;
   Name := q_uppercase(Name);

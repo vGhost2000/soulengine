@@ -39,7 +39,7 @@ type
       Shift: TShiftState);
     procedure onKeyUp(Sender: TObject; var Key: word;
       Shift: TShiftState);
-    procedure onKeyPress(Sender: TObject; var Key: char);
+    procedure onKeyPress(Sender: TObject; var Key: ansichar);
 
 
     procedure onMouseDown(Sender: TObject; Button: TMouseButton;
@@ -1630,7 +1630,7 @@ begin
   end;
 end;
 
-procedure THandlerFuncs.onKeyPress(Sender: TObject; var Key: char);
+procedure THandlerFuncs.onKeyPress(Sender: TObject; var Key: ansichar);
 var
   H: TPHPScriptEventHandler;
 begin

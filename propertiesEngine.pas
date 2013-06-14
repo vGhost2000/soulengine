@@ -5,7 +5,7 @@ interface
 uses
   SysUtils,
   Dialogs, Forms, Graphics, Classes, Controls, StdCtrls, TypInfo, Variants,
-  mainLCL;
+  mainLCL, WideStrUtils;
 
 function setProperty(id: integer; prop: string; Value: variant): boolean;
 function getProperty(id: integer; prop: string): variant;
@@ -21,12 +21,21 @@ function setProperty(id: integer; prop: string; Value: variant): boolean;
 var
   o: TObject;
   inf: PPropInfo;
+  S: RawByteString;
 begin
   try
     o := TObject(integer(id));
     inf := TypInfo.GetPropInfo(o, prop);
-    if inf <> nil then
+    if inf <> nil then begin
+      if TVarData(Value).VType = varString then begin
+        S := Value;
+        if IsUTF8String(S) then begin
+          SetCodePage(S, 65001, false);
+          Value := S;
+        end;
+      end;
       SetPropValue(o, prop, Value);
+    end;
   except
     on E: Exception do
     begin

@@ -58,7 +58,7 @@ procedure TPHPCatButtons._ButtonCatigoriesFunctions1Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   ReturnValue := integer(TButtonCategories(ToObj(Parameters, 0)).Insert(
-    Parameters[1].Value));
+    Parameters[1].VValue));
 end;
 
 procedure TPHPCatButtons._ButtonCatigoriesFunctions2Execute(Sender: TObject;

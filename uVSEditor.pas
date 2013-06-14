@@ -79,10 +79,10 @@ begin
 {$IFDEF VS_EDITOR}
   initIns(Parameters);
 
-  ItemClass := TNxItemClass(GetClass(Parameters[2].Value));
+  ItemClass := TNxItemClass(GetClass(Parameters[2].VValue));
 
   ReturnValue := integer(ins.Items.AddChild(TNxPropertyItem(
-    ToObj(Parameters, 1)), ItemClass, Parameters[3].Value));
+    ToObj(Parameters, 1)), ItemClass, Parameters[3].VValue));
 {$ENDIF}
 end;
 
@@ -97,10 +97,10 @@ begin
 {$IFDEF VS_EDITOR}
   initIns(Parameters);
 
-  ItemClass := TNxItemClass(GetClass(Parameters[2].Value));
+  ItemClass := TNxItemClass(GetClass(Parameters[2].VValue));
 
   ReturnValue := integer(ins.Items.AddChildFirst(
-    TNxPropertyItem(ToObj(Parameters, 1)), ItemClass, Parameters[3].Value));
+    TNxPropertyItem(ToObj(Parameters, 1)), ItemClass, Parameters[3].VValue));
 {$ENDIF}
 end;
 
@@ -116,7 +116,7 @@ var
 begin
 {$IFDEF VS_EDITOR}
 
-  v := Parameters[2].Value;
+  v := Parameters[2].VValue;
   n := LowerCase(Parameters[1].ZendVariable.AsString);
   vF := Parameters[3].ZendVariable.AsBoolean;
 
@@ -197,9 +197,9 @@ var
 begin
 {$IFDEF VS_EDITOR}
 
-  ItemClass := TNxItemClass(GetClass(Parameters[1].Value));
+  ItemClass := TNxItemClass(GetClass(Parameters[1].VValue));
 
-  ReturnValue := integer(TNxPropertyItem(ToObj(Parameters, 0)).AddChild(ItemClass, Parameters[2].Value));
+  ReturnValue := integer(TNxPropertyItem(ToObj(Parameters, 0)).AddChild(ItemClass, Parameters[2].VValue));
 {$ENDIF}
 
 end;
@@ -211,14 +211,14 @@ begin
 {$IFDEF VS_EDITOR}
   initIns(Parameters);
 
-  if Parameters[1].Value = null then
+  if Parameters[1].VValue = null then
     ins.Items.AddItem(nil,
       TNxPropertyItem(ToObj(Parameters, 2)),
-      Parameters[3].Value)
+      Parameters[3].VValue)
   else
     ins.Items.AddItem(TNxPropertyItem(ToObj(Parameters, 1)),
       TNxPropertyItem(ToObj(Parameters, 2)),
-      Parameters[3].Value);
+      Parameters[3].VValue);
 {$ENDIF}
 
 end;
@@ -228,10 +228,10 @@ procedure TphpVSEditor._VSItemsFunctions2Execute(Sender: TObject;
   TSRMLS_DC: Pointer);
 begin
   {$IFDEF VS_EDITOR}
-  if Parameters[1].Value = null then
+  if Parameters[1].VValue = null then
     ReturnValue := TNxComboBoxItem(ToObj(Parameters, 0)).Lines.Text
   else
-    TNxComboBoxItem(ToObj(Parameters, 0)).Lines.Text := Parameters[1].Value;
+    TNxComboBoxItem(ToObj(Parameters, 0)).Lines.Text := Parameters[1].VValue;
 {$ENDIF}
 end;
 
@@ -251,12 +251,12 @@ procedure TphpVSEditor._VSEditorFunctions4Execute(Sender: TObject;
 begin
 {$IFDEF VS_EDITOR}
   initIns(Parameters);
-  if Parameters[1].Value = Null then
+  if Parameters[1].VValue = Null then
   begin
     ReturnValue := ins.SelectedIndex;
   end
   else
-    ins.SelectedIndex := Parameters[1].Value;
+    ins.SelectedIndex := Parameters[1].VValue;
 {$ENDIF}
 end;
 

@@ -10,7 +10,7 @@ interface
   , Tabs, Graphics, MImage, ValEdit, mainLCL, uGuiScreen, cooltrayicon,
 
   pngimage, dsStdCtrl{, rkSmartTabs}
-
+  , NxGrid, NxCustomGrid, NxColumns, NxColumnClasses
 
   {$IFDEF ADD_CHROMIUM}
     ,ceflib, cefvcl, cefgui
@@ -386,7 +386,10 @@ begin
                 TSynCompletionProposal, TSynHighlighterAttributes,
 
                 TButtonCategory, TButtonCategories,
-                TButtonItem, TCategoryButtons
+                TButtonItem, TCategoryButtons,
+
+                TNextGrid, TNxCustomGrid, TNxColumns, TNxTextColumn, TNxTextColumn,
+                TNxNumberColumn, TNxDateColumn, TNxCheckBoxColumn
 
               ]);
    {$ENDIF}
@@ -418,7 +421,7 @@ begin
     registerSystem;
     registerSamples;
     registerGraph;
-    
+
    {$IFDEF ADD_SKINS}
     registerSkins;
    {$ENDIF}

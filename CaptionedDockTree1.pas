@@ -6,7 +6,7 @@
 {                                                       }
 {*******************************************************}
 
-unit CaptionedDockTree;
+unit CaptionedDockTree1;
 
 interface
 
@@ -1338,7 +1338,7 @@ var DC,BDC:HDC;
     P:PWideChar;
     A:Array [0..512] of WideChar;
     NonClientMetrics: TNonClientMetrics;
-    FontInfo: tagLOGFONTA;
+    FontInfo: tagLOGFONTW;
 begin
  if ctl3d then inherited
  else begin
