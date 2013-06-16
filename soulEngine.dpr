@@ -17,7 +17,9 @@ uses
   uVSEditor in 'uVSEditor.pas',
   {$ENDIF}
 
-   regGui in 'regGui.pas';
+  regGui in 'regGui.pas',
+  Vcl.Themes,
+  Vcl.Styles;
 
 {$R *.res}
 
@@ -32,7 +34,7 @@ uses
   uVSEditor in 'units\uVSEditor.pas',
   $ENDIF
 
-}
+
 
 {var
   isPSE: Boolean;
@@ -42,7 +44,6 @@ begin
 
   Application.MainFormOnTaskBar := false;
   Application.ShowMainForm      := false;
-
 
   Application.CreateForm(T__mainForm, __mainForm);
   Application.CreateForm(T__fMain, __fMain);
@@ -55,7 +56,7 @@ begin
   {$IFDEF VS_EDITOR}
   Application.CreateForm(TPHPCatButtons, PHPCatButtons);
   {$ENDIF}
-  
+
    T__fMain.loadEngine(dllPHPPath);
 
   //if not isPSE then

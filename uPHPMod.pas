@@ -23,7 +23,8 @@ uses
   Messages, MImage, Vcl.Imaging.GIFImg, Jpeg, Grids, CaptionedDockTree1, Clipbrd,
                                      //GifImage
   WideStrUtils,
-
+  Vcl.Themes,
+  Vcl.Styles,
   {$IFDEF MSWINDOWS}
   ActiveX, ShlObj, WinInet,
   {$ENDIF}
@@ -1170,9 +1171,13 @@ type
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure PHPEngineScriptError(Sender: TObject; AText: AnsiString;
       AType: Integer; AFileName: AnsiString; ALineNo: Integer);
+    procedure set_theme_style(Sender: TObject;
+      Parameters: TFunctionParams; var ReturnValue: Variant;
+      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure guiFunctions18Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: Variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
+    procedure PHPEngineLogMessage(Sender: TObject; AText: AnsiString);
   private
     { Private declarations }
   public
@@ -1450,11 +1455,10 @@ end;
 
 procedure addVar(aName, aValue: variant; PSV: TpsvPHP = nil);
 begin
-  aValue := StringReplace(aValue, '\', '\\', [rfReplaceAll]);
   if PSV = nil then
-    phpMOD.RunCode('$GLOBALS["' + aName + '"]= ''' + AddSlashes(aValue) + '''; ?>')
+    phpMOD.RunCode('<?php $GLOBALS["' + aName + '"]= ''' + AddSlashes(aValue) + '''; ?>')
   else
-    psv.RunCode('$GLOBALS["' + aName + '"]= ''' + AddSlashes(aValue) + '''; ?>');
+    psv.RunCode('<?php $GLOBALS["' + aName + '"]= ''' + AddSlashes(aValue) + '''; ?>');
 end;
 
 function ToObj(V: variant): TObject; overload;
@@ -2446,12 +2450,23 @@ var
   fatal_handler_php: ansistring;
 
 
+procedure TphpMOD.PHPEngineLogMessage(Sender: TObject; AText: AnsiString);
+begin
+  {$IFNDEF NO_DEBUG}
+    showmessage(AText);
+  {$ENDIF}
+end;
+
 procedure TphpMOD.PHPEngineScriptError(Sender: TObject; AText: AnsiString;
   AType: integer; AFileName: AnsiString; ALineNo: integer);
 var
   s: string;
   PHP: TpsvPHP;
 begin
+  {$IFNDEF NO_DEBUG}
+    showmessage(AText);
+  {$ENDIF}
+
   if fatal_handler_php <> '' then
   begin
 
@@ -5689,6 +5704,14 @@ begin
   SetScrollPos(TWinControl(ToObj(Parameters, 0)).Handle, Parameters[1].VValue,
     Parameters[2].VValue, Parameters[1].VValue);
 end;
+
+procedure TphpMOD.set_theme_style(Sender: TObject;
+  Parameters: TFunctionParams; var ReturnValue: Variant; ZendVar: TZendVariable;
+  TSRMLS_DC: Pointer);
+begin
+  TStyleManager.TrySetStyle(Parameters[0].AsStr );
+end;
+
 
 procedure TphpMOD.guiFunctions18Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: Variant; ZendVar: TZendVariable;

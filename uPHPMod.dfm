@@ -1075,6 +1075,16 @@ object phpMOD: TphpMOD
             ParamType = tpUnknown
           end>
         OnExecute = guiFunctions17Execute
+      end
+      item
+        FunctionName = 'set_theme_style'
+        Tag = 0
+        Parameters = <
+          item
+            Name = 'name'
+            ParamType = tpString
+          end>
+        OnExecute = set_theme_style
       end>
     Left = 536
     Top = 72
@@ -2674,7 +2684,8 @@ object phpMOD: TphpMOD
     OnScriptError = PHPEngineScriptError
     RegisterGlobals = False
     Constants = <>
-    ReportDLLError = False
+    DLLFolder = 'c:\php\'
+    ReportDLLError = True
     Left = 24
     Top = 8
   end
