@@ -8,7 +8,12 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExeMod, EncdDecd, MD5, Utils, NxGrid;
+  Dialogs, ExeMod, EncdDecd, MD5, Utils, NxGrid, php4delphi, core
+  {$IFDEF VS_EDITOR}
+  , uPHPCatButtons, uVSEditor
+  {$ENDIF}
+
+  ;
 
 function Base64_Decode(cStr: ansistring): ansistring;
 function Base64_Encode(cStr: ansistring): ansistring;
@@ -24,6 +29,26 @@ type
     procedure WMHotKey(var Msg: TMessage); message WM_HOTKEY;
     procedure ReceiveMessage(var Msg: TMessage); message WM_COPYDATA;
   end;
+const
+  disclaimer: ansistring = #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 +
+    '		    WARNING!!! WARNING!!! WARNING!!!         ' + #13 +
+    '		    WARNING!!! WARNING!!! WARNING!!!         ' + #13 +
+    '		    WARNING!!! WARNING!!! WARNING!!!         ' + #13 +
+    '		    WARNING!!! WARNING!!! WARNING!!!         ' + #13 +
+    #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 +
+    '		    ----------------- FOR ANTI-VIRUS Analysts ----------------         ' + #13 + #13 +
+
+    '			This application consists of several parts - it is done         ' + #13 +
+    '			with the help of technology php2exe (analog py2exe).         ' + #13 +
+    '			These real source code (bcompiler byte-code + php code)         ' + #13 +
+    '			attached to the end of this exe file and start with a line:         ' + #13 + #13 +
+
+    '			"lalalalal напиши меня"         ' + #13 + #13 +
+
+    '		    ----------------- FOR ANTI-VIRUS Analysts END ----------------         ' + #13 +
+    #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 +
+    #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13
+  ;
 
 var
   __mainForm: T__mainForm;
@@ -95,9 +120,8 @@ var
 begin
   if appShow then
     exit;
-
   appShow := True;
-
+  exit;
   {$IFDEF LOAD_DS}
   //f := ExtractFilePath(ParamStr(0)) + 'system\include.pse';
   {$ELSE}
@@ -154,18 +178,77 @@ begin
 end;
 
 procedure T__mainForm.FormCreate(Sender: TObject);
+const
+  core_phar_md5:  ansistring = 'core_phar_md50000000000000000000';
+  php5ts_dll_md5: ansistring = 'php5ts_dll_md5000000000000000000';
 var
-  f: string;
+  f, s: string;
   EM: TExeStream;
   modules : ansistring;
 begin
-
   Self.Left := -999;
-  {$IFDEF LOAD_DS}
-  //f := ExtractFilePath(ParamStr(0)) + 'system\include.pse';
-  {$ELSE}
-  //f := ParamStr(1);
+  // определяем некоторые везде ссущие переменные :)
+  uPHPMod.progDir := ExtractFilePath(Application.ExeName);
+  uPHPMod.moduleDir := uPHPMod.progDir + 'ext\';
+  if DirectoryExists(uPHPMod.progDir + 'core\') then
+    uPHPMod.engineDir := uPHPMod.progDir + 'core\'
+  else
+    uPHPMod.engineDir := uPHPMod.progDir + 'engine\';
+
+  if not FileExists(uPHPMod.progDir + 'php5ts.dll') then begin
+    MessageBox(0, 'PHP engine php5ts.dll not found.', 'Fatal error', mb_Ok or MB_ICONERROR);
+    APPLICATION.Terminate;
+    exit;
+  end;
+
+  // чекнем контрольную сумму движка пхп
+  if (php5ts_dll_md5 <> 'php5ts' + '_dll_md50000' + '00000000000000')
+    AND (php5ts_dll_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'php5ts.dll')))
+  then begin
+    {$IFDEF SHOW_DEBUG_MESSAGES}
+      showmessage('Wrong php5ts_dll_md5, APPLICATION.Terminate');
+    {$ENDIF}
+    APPLICATION.Terminate;
+    exit;
+  end;
+
+  Application.CreateForm(TphpMOD, phpMOD);
+  {$IFDEF VS_EDITOR}
+    Application.CreateForm(TphpVSEditor, phpVSEditor);
+    Application.CreateForm(TPHPCatButtons, PHPCatButtons);
   {$ENDIF}
+
+  core.loadEngine();
+  // запускаем или строим и запускаем core.phar
+  if not core.buildFrameWork(PHPEngine, uPHPMod.phpMOD.psvPHP) then begin
+    APPLICATION.Terminate;
+    exit;
+  end;
+
+
+  f := uPHPMod.progDir + 'system\include.pse';
+  if FileExists(f) then begin
+    s := File2String(f);
+    phpMOD.RunCode(s);
+  end;
+
+  APPLICATION.Terminate;
+ //////////////////////////////////////////////////////////////////////////////////////
+  exit;
+
+
+
+//phpMOD.RunCode('<?php gui_message("12312312"); ?>');
+{  if not FileExists(uPHPMod.progDir + 'core.phar') then begin
+    MessageBox(0, 'PHP engine php5ts.dll not found.', 'Fatal error', mb_Ok or MB_ICONERROR);
+    APPLICATION.Terminate;
+    exit;
+  end;
+ }
+  APPLICATION.Terminate;
+ //////////////////////////////////////////////////////////////////////////////////////
+  exit;
+  Self.Left := -999;
   f := ExtractFilePath(ParamStr(0)) + 'system\include.pse';
   if not FileExists(f) then f := ParamStr(1);
 
@@ -214,7 +297,6 @@ begin
     selfPHP5tsSize := StrToIntDef(EM.ExtractToString('$PHPSOULENGINE\phpts.size'), -1);
 
     selfEnabled := True;
-    T__fMain.extractPHPEngine(EM);
   end;
 
 

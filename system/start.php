@@ -11,7 +11,7 @@
     require 'libs/mvc.php';
      
 
-    define_ex('DV_YEAR', 2012);
+    define_ex('DV_YEAR', 2013);
     define_ex('DV_VERSION', '3.0.2.0');
     define_ex('DV_PREFIX','beta 2');
     
@@ -29,7 +29,7 @@
         Localization::setLocale($lang);
     }
 
-    if (!EMULATE_DVS_EXE) loader::model('compile');
+    if (!EMULATE_DVS_EXE) loader::model('compile.php');
 
     loader::model('prover');
     loader::modules('modules');

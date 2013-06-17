@@ -51,6 +51,9 @@ function ToCntrl(V: variant): TControl;
 function ToPChar(V: variant): PAnsiChar;
 function ToPWideChar(V: variant): PWideChar;
 procedure SetAsMainForm(aForm: TForm);
+function getIniLocation(DLLFolder: string): string;
+
+
 
 
 type
@@ -1248,6 +1251,19 @@ uses uMain, uMainForm, ImgList, Math, IniFiles, Types,
 
 {$R *.dfm}
 
+
+function getIniLocation(DLLFolder: string): string;
+begin
+  if FileExists(engineDir + '\php.ini') then
+    result := engineDir + '\php.ini'
+  else if FileExists(iniDir + '\php.ini') then
+    result := iniDir
+  else if FileExists(progDir + '\php.ini') then
+    result := progDir
+  else
+    result := DLLFolder;
+end;
+
 function checkPHPSyntax(S: ansistring): ansistring;
 var
   pengine: TPHPEngine;
@@ -2094,7 +2110,9 @@ begin
   isTermited := False;
   psvXList := TList.Create;
   //ApplicationEx := TApplicationEx.Create(nil);
-  RegisterHotKey(__fMain.Handle, MyHotKey, 0, MyHotKey);
+  // vGTEMP DISABLE
+  //RegisterHotKey(__fMain.Handle, MyHotKey, 0, MyHotKey);
+  RegisterHotKey(__mainForm.Handle, MyHotKey, 0, MyHotKey);
   IdleEnable := False;
 
   PHPEngine.OnScriptError := phpMOD.PHPEngineScriptError;
@@ -2111,9 +2129,10 @@ begin
   if Assigned(Application.MainForm) then
     Application.MainForm.Hide;
 
-  __fMain.Left := -9999;
+  //__fMain.Left := -9999;
   __mainForm.Hide;
-  UnRegisterHotKey(__fMain.Handle, MyHotKey);
+  //UnRegisterHotKey(__fMain.Handle, MyHotKey);
+  UnRegisterHotKey(__mainForm.Handle, MyHotKey);
 
   Application.MainFormOnTaskBar := False;
   Application.ShowMainForm := False;

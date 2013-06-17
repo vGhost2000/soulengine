@@ -57,7 +57,7 @@ type
   public
     { Public declarations }
     class procedure loadEngine(DLLFolder: string = '');
-    class procedure extractPHPEngine(EM: TExeStream);
+    //class procedure extractPHPEngine(EM: TExeStream);
   end;
 
 var
@@ -129,7 +129,11 @@ begin
     PHPEngine.HandleErrors := True;
   end
   else
-    PHPEngine.HandleErrors := True;
+    {$IFDEF NO_DEBUG}
+      PHPEngine.HandleErrors := False;
+    {$ELSE}
+      PHPEngine.HandleErrors := True;
+    {$ENDIF}
 
   //phpMOD.RunFile(engineDir+'include.php');
   if (DLLFolder = '') then
@@ -137,14 +141,7 @@ begin
 
   PHPEngine.DLLFolder := DLLFolder;
 
-  if FileExists(engineDir + '\php.ini') then
-    PHPEngine.IniPath := engineDir + '\php.ini'
-  else if FileExists(iniDir + '\php.ini') then
-    PHPEngine.IniPath := iniDir
-  else if FileExists(progDir + '\php.ini') then
-    PHPEngine.IniPath := progDir
-  else
-    PHPEngine.IniPath := PHPEngine.DLLFolder;
+  PHPEngine.IniPath := uPHPMod.getIniLocation(DLLFolder);
 
   //  FS := TFileStream.Create(PHPEngine.IniPath, fmOpenRead, fmShareDenyWrite);
 
@@ -180,84 +177,6 @@ begin
   SetString(Result, Buffer, GetTempPath(Sizeof(Buffer) - 1, Buffer));
 end;
 
-class procedure T__fMain.extractPHPEngine(EM: TExeStream);
-
-var
-  dir, INI, HASH: string;
-  PHP5tsExists: boolean;
-  t: integer;
-label
-  1;
-begin
-  INI := EM.ExtractToString('$PHPSOULENGINE\phpini');
-  HASH := EM.ExtractToString('$PHPSOULENGINE\phpini.hash');
-
-  if (INI <> '') then
-  begin
-    if (myMD5(INI) <> HASH) then
-      halt;
-
-    dir := TempDir + '\PSE30\';
-    iniDir := dir + xMD5(exe) + '\';
-
-    if FileExists(iniDir + 'php.ini') then
-    begin
-      if (File2String(iniDir + 'php.ini') = INI) then
-        goto 1;
-    end;
-
-    ForceDirectories(iniDir);
-    String2File(INI, iniDir + 'php.ini');
-    //TFileStream.Create(iniDir + 'php.ini', fmOpenRead, fmShareDenyWrite);
-  end;
-
-  1: ;
-   (*EM.ExtractToList('$PHPENGINE',l);
-   mDir := EM.ExtractToString('$PHP_MODULEDIR');
-
-   PHP5tsExists := false;
-   mDir := StringReplace(mDir,'{pse}',dir,[rfIgnoreCase]);
-   mDir := StringReplace(mDir,'{progdir}',progDir,[rfIgnoreCase]);
-   mDir := StringReplace(mDir,'{temp}',TempDir,[rfIgnoreCase]);
-
-   if L.Count = 0 then begin
-        dllPHPPath := progDir;
-        //dllPHPPath := dir + '';
-        moduleDir  := progDir + '\php\modules\';
-   end else begin
-        dllPHPPath := dir + '';
-        moduleDir  := dir + 'php\modules\';
-
-        for i:=0 to l.Count-1 do begin
-                f := l[i];
-                f := StringReplace(f,'/','\',[rfReplaceAll]);
-
-                if f = '\php5ts.dll' then
-                  PHP5tsExists := true;
-
-
-                if (not FileExists(dir + 'php\' + f)) or (f='\php.ini') then
-                begin
-
-                   if f = '\php.ini' then begin
-
-                     String2File(  StringReplace(EM.ExtractToString('$PSE'+l[i]),
-                                        '.\php\modules\', mDir, [rfReplaceAll]),
-                                    iniDir + f   );
-                   end else
-                   begin
-                    EM.ExtractToFile('$PSE' + l[i],
-                       StringReplace(dir + 'php\' + f,'\\','\',[rfReplaceAll]));
-                   end;
-                end;
-        end;
-
-        if not PHP5tsExists then
-          dllPHPPath := '';
-   end;      *)
-
-  //ShowMessage(IntToStr(GetTickCount-t));
-end;
 
 procedure T__fMain.Open1Click(Sender: TObject);
 begin

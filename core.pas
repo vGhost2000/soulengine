@@ -9,7 +9,7 @@ interface
 uses
   Classes, SysUtils, Forms, php4delphi, zendAPI, phpAPI, PHPTypes,
   regGui, guiComponents, guiForms, guiProperties, dsUtils,
-
+  uPHPMod, WinApi.Windows,
   {$IFDEF ADD_CHROMIUM}
   guiChromium,
   {$ENDIF}
@@ -22,6 +22,8 @@ var
 
 function getPsvPHP(): TpsvPHP;
 procedure core_Init(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil);
+function buildFrameWork(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil): boolean;
+procedure loadEngine();
 
 
 implementation
@@ -56,6 +58,54 @@ begin
   InitializeDsUtils(myPHPEngine);
 
   myPHPEngine.StartupEngine;
+end;
+
+
+procedure loadEngine();
+begin
+  // инициализируем пхп
+  if (ParamStr(2) = '-errors') then
+  begin
+    PHPEngine.HandleErrors := True;
+  end
+  else
+    {$IFDEF NO_DEBUG}
+      PHPEngine.HandleErrors := False;
+    {$ELSE}
+      PHPEngine.HandleErrors := True;
+    {$ENDIF}
+
+  PHPEngine.DLLFolder := uPHPMod.progDir;
+  PHPEngine.IniPath   := uPHPMod.getIniLocation(uPHPMod.progDir);
+
+  core_Init(PHPEngine, uPHPMod.phpMOD.psvPHP);
+  addVar('progDir',   uPHPMod.progDir);
+  addVar('moduleDir', uPHPMod.moduleDir);
+  addVar('engineDir', uPHPMod.engineDir);
+end;
+
+
+function buildFrameWork(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil): boolean;
+begin
+  result := false;
+
+  if not FileExists(uPHPMod.progDir + 'core.phar') then begin
+    if not FileExists(uPHPMod.engineDir + 'coreBuilder.php') then begin
+      MessageBox(0, 'Core archive builder script not found.', 'Fatal error', mb_Ok or MB_ICONERROR);
+      exit;
+    end;
+
+    uPHPMod.phpMOD.RunFile(uPHPMod.engineDir + 'coreBuilder.php');
+    uPHPMod.phpMOD.RunCode('<?php CoreBuilder::buildFrameWork(); ?>');
+  end;
+
+  if not FileExists(uPHPMod.progDir + 'core.phar') then begin
+    MessageBox(0, 'Core archive builder script failed build archive.', 'Fatal error', mb_Ok or MB_ICONERROR);
+    exit;
+  end;
+
+  uPHPMod.phpMOD.RunCode('<?php require_once("phar://" . $GLOBALS["progDir"] . "core.phar/include.php"); ?>');
+  result := true;
 end;
 
 

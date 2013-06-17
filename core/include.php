@@ -39,7 +39,7 @@ if ($prs2_ext=='dvsexe' || $prs2_ext=='mspprexe'){
 	define('DOC_ROOT2', str_replace('//','/',replaceSl($progDir)));
 	$progDir = replaceSr(dirname( param_str(2) )).'\\';
 } 
-define('DOC_ROOT',str_replace('//','/',replaceSl($progDir)));
+define('DOC_ROOT',str_replace('//','/',replaceSl($progDir)) . 'system/');
 define('MODULE_DIR',replaceSl($moduleDir));
 define('ENGINE_DIR',replaceSl($engineDir));
 define('DRIVE_CHAR', $progDir[0]);
@@ -51,43 +51,50 @@ $_SERVER['DOCUMENT_ROOT'] = DOC_ROOT;
 $_SERVER['MODULE_DIR'] = MODULE_DIR;
 $_SERVER['ENGINE_DIR'] = ENGINE_DIR;
 /* %START_MODULES% */
-include_lib('main','constant');
-include_lib('debug','errors');
-include_lib('debug','bytecode');
-include_lib('debug','debugclass');
-include_lib('','config');
-include_lib('main','objects');
-include_lib('main','classes');
-include_lib('main','messages');
-include_lib('main','graphics');
-include_lib('main','dfmreader');
-include_lib('main','forms');
-include_lib('main','dialogs');
-include_lib('main','standart');
-include_lib('main','timing');
-include_lib('main','threading');
-include_lib('main','buttons');
-include_lib('main','additional');
-include_lib('main','menus');
-include_lib('main','imagelist');
-include_lib('main','web');
-include_lib('main','grids');
-include_lib('main','registry');
+require_once('main/constant.php');
+require_once('debug/errors.php');
+require_once('debug/bytecode.php');
+require_once('debug/debugclass.php');
+require_once('config.php');
+require_once('main/objects.php');
+require_once('main/classes.php');
+require_once('main/messages.php');
+require_once('main/graphics.php');
+require_once('main/dfmreader.php');
+require_once('main/forms.php');
+require_once('main/dialogs.php');
+require_once('main/standart.php');
+require_once('main/timing.php');
+require_once('main/threading.php');
+require_once('main/buttons.php');
+require_once('main/additional.php');
+require_once('main/menus.php');
+require_once('main/imagelist.php');
+require_once('main/web.php');
+require_once('main/grids.php');
+require_once('main/registry.php');
 
-include_lib('main','keyboard');
-include_lib('main','localization');
-include_lib('main','osapi');
-include_lib('main','utils');
-include_lib('main','skins');
+require_once('main/keyboard.php');
+require_once('main/localization.php');
+require_once('main/osapi.php');
+require_once('main/utils.php');
+require_once('main/skins.php');
 
-include_lib('files','file');
-include_lib('files','ini');
-include_lib('files','ini_ex');
+require_once('files/file.php');
+require_once('files/ini.php');
+require_once('files/ini_ex.php');
 
-include_lib('design','sizecontrol');
-include_lib('design','propcomponents');
-include_lib('design','dfmparser');
-include_lib('design','synedit');
+require_once('design/sizecontrol.php');
+require_once('design/propcomponents.php');
+require_once('design/dfmparser.php');
+require_once('design/synedit.php');
 
-include_lib('','inits');
+require_once('inits.php');
+
+if (!class_exists('CoreBuilder')) {
+	require_once('coreBuilder.php');
+}
+
+
+__HALT_COMPILER();
 

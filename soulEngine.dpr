@@ -46,21 +46,21 @@ begin
   Application.ShowMainForm      := false;
 
   Application.CreateForm(T__mainForm, __mainForm);
-  Application.CreateForm(T__fMain, __fMain);
-  Application.CreateForm(TphpMOD, phpMOD);
+  //Application.CreateForm(T__fMain, __fMain);
+  //Application.CreateForm(TphpMOD, phpMOD);
   {$IFDEF VS_EDITOR}
-  Application.CreateForm(TphpVSEditor, phpVSEditor);
+  //Application.CreateForm(TphpVSEditor, phpVSEditor);
   {$ENDIF}
 
 
   {$IFDEF VS_EDITOR}
-  Application.CreateForm(TPHPCatButtons, PHPCatButtons);
+  //Application.CreateForm(TPHPCatButtons, PHPCatButtons);
   {$ENDIF}
 
-   T__fMain.loadEngine(dllPHPPath);
+   //T__fMain.loadEngine(dllPHPPath);
 
   //if not isPSE then
-    __mainForm.FormActivate(__mainForm);
+    //__mainForm.FormActivate(__mainForm);
 
   Application.Run;
 
