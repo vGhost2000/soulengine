@@ -314,28 +314,28 @@ class myUtils {
             /****** ---- *****/
     }
     
-    static function saveForm($name = false){
-        
-        global $myProject, $projectFile, $formSelected, $_FORMS;
-        
-        if (!$name || is_numeric($name))
-            $name = $_FORMS[$formSelected];        
-        
-        
-            /****** event *****/
-            if (!CApi::doEvent('onSaveForm',array('name'=>$name))) return;
-            /****** ---- *****/
-        
-        $file = dirname($projectFile) .'/'. $name . '.dfm';
-        
-        myProject::saveFormInfo();
-        self::saveFormDFM($file);
-        //eventEngine::updateIndexes();
-        
-            /****** event *****/
-            if (!CApi::doEvent('onSaveFormAfter',array('name'=>$name))) return;
-            /****** ---- *****/
-    }
+	public static function saveForm($name = false)
+	{
+		global $myProject, $projectFile, $formSelected, $_FORMS;
+
+		if (!$name || is_numeric($name)) {
+			$name = $_FORMS[$formSelected];
+		}
+
+			/****** event *****/
+			if (!CApi::doEvent('onSaveForm',array('name'=>$name))) return;
+			/****** ---- *****/
+
+		$file = dirname($projectFile) . '/' . $name . '.dfm';
+
+		myProject::saveFormInfo();
+		self::saveFormDFM($file);
+		//eventEngine::updateIndexes();
+		
+			/****** event *****/
+			if (!CApi::doEvent('onSaveFormAfter',array('name'=>$name))) return;
+			/****** ---- *****/
+	}
     
     static function deleteForm($name = false){
         global $projectFile, $formSelected, $_FORMS, $_sc;

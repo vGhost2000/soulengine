@@ -30,16 +30,25 @@ class CoreBuilder
 	}
 
 
-	public static function buildFrameWork()
+	public static function buildFrameWork($check_changes = false)
 	{
 		try {
 			list($dir, $prog) = self::getPathVars();
 
+			if ($check_changes) {
+				$check_changes = filemtime($prog . 'core.phar');
+			}
 			$archive   = new Phar($prog . 'core.phar');
 			$Directory = new RecursiveDirectoryIterator($dir);
 			$Iterator  = new RecursiveIteratorIterator($Directory);
 			foreach(new RegexIterator($Iterator, '#^.+\.p(hp|hb|se)$#i', RecursiveRegexIterator::GET_MATCH) as $item_path => $info) {
 				$item_path = str_replace('\\', '/', $item_path);
+
+				// если это проверка изменений в существующем архиве и дата изменения архива больше даты изменения файла, то файл не менялся, скипаем
+				if ($check_changes && $check_changes > filemtime($item_path)) {
+					continue;
+				}
+
 				$archive->addFile($item_path, str_replace($dir, '', $item_path));
 				/*$tmp = $item_path . '.tmp';
 				if (is_file($tmp)) {

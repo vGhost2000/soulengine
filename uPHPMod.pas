@@ -1152,6 +1152,8 @@ type
       Parameters: TFunctionParams; var ReturnValue: Variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure PHPEngineLogMessage(Sender: TObject; AText: AnsiString);
+    procedure checkCodeForErrors(Sender: TObject; Parameters: TFunctionParams;
+      var ReturnValue: Variant; ZendVar: TZendVariable; TSRMLS_DC: Pointer);
   private
     { Private declarations }
   public
@@ -1194,6 +1196,12 @@ type
   TArrayString = array of string;
   TArrayVariant = array of variant;
   TPHPArray = array of HashItem;
+  THidedLastError = record
+    AText: AnsiString;
+    AType: integer;
+    AFileName: AnsiString;
+    ALineNo: integer
+  end;
 
 var
   phpMOD: TphpMOD;
@@ -1210,7 +1218,8 @@ var
 
   // ApplicationEx: TApplicationEx;
   psvX: TpsvPHP;
-  vGhostCounter : integer = 0;
+  HideErrors : integer = 0;
+  HidedLastError: THidedLastError;
 
 const
   aNil = -1;
@@ -2096,6 +2105,25 @@ begin
 end;
 
 
+procedure TphpMOD.checkCodeForErrors(Sender: TObject;
+  Parameters: TFunctionParams; var ReturnValue: Variant; ZendVar: TZendVariable;
+  TSRMLS_DC: Pointer);
+begin
+  HideErrors := 1;
+  psvPHP.RunCode('<?php mySyntaxCheck::doCheckCodeErrors(); ?>');
+
+  if HideErrors = 2 then
+    psvPHP.RunCode('<?php mySyntaxCheck::$code_to_check = ''' +
+      AddSlashes(HidedLastError.AText + '|' + intToStr(HidedLastError.AType) + '|' +
+      intToStr(HidedLastError.ALineNo)) + '''; ?>'
+    )
+  else
+    psvPHP.RunCode('<?php mySyntaxCheck::$code_to_check = false; ?>');
+
+  HideErrors := 0;
+end;
+
+
 procedure TphpMOD.DataModuleCreate(Sender: TObject);
 begin
   Randomize;
@@ -2103,8 +2131,6 @@ begin
   isTermited := False;
   psvXList := TList.Create;
   //ApplicationEx := TApplicationEx.Create(nil);
-  // vGTEMP DISABLE
-  //RegisterHotKey(__fMain.Handle, MyHotKey, 0, MyHotKey);
   RegisterHotKey(__mainForm.Handle, MyHotKey, 0, MyHotKey);
   IdleEnable := False;
 
@@ -2465,7 +2491,8 @@ var
 procedure TphpMOD.PHPEngineLogMessage(Sender: TObject; AText: AnsiString);
 begin
   {$IFNDEF NO_DEBUG}
-    showmessage(AText);
+    showmessage('__PHPEngine_LOG_MSG__ ' + AText);
+    writeMyFile(uPHPMod.progDir + 'errors.log', AText);
   {$ENDIF}
 end;
 
@@ -2475,8 +2502,17 @@ var
   s, err_code: string;
   PHP: TpsvPHP;
 begin
+  if HideErrors > 0 then begin
+    HideErrors               := 2;
+    HidedLastError.AText     := AText;
+    HidedLastError.AType     := AType;
+    HidedLastError.AFileName := AFileName;
+    HidedLastError.ALineNo   := ALineNo;
+    exit;
+  end;
+
   {$IFNDEF NO_DEBUG}
-    showmessage(AText);
+    showmessage('PHPEngineScriptError '+AText);
   {$ENDIF}
 
   if fatal_handler_php <> '' then begin
@@ -2486,24 +2522,21 @@ begin
         '''' + AddSlashes(AText) + ''', ''' + AddSlashes(AFileName) +
         ''', ' + IntToStr(ALineNo) + ');'
     ;
+    {$IFNDEF NO_DEBUG}
+      writeMyFile(uPHPMod.progDir + 'errors.log', AText + #13 + err_code);
+    {$ENDIF}
     if Assigned(PHP.Thread) then
-    begin
-      PHP.RunCode(err_code);
-      {$IFNDEF NO_DEBUG}
-        writeMyFile(uPHPMod.progDir + 'errors.log', AText + #13 + err_code);
-      {$ENDIF}
-    end else begin
+      PHP.RunCode(err_code)
+    else
       RunCode(err_code);
-      {$IFNDEF NO_DEBUG}
-        writeMyFile(uPHPMod.progDir + 'errors.log', AText + #13 + err_code);
-      {$ENDIF}
-    end;
   end else begin
     s := AFileName + ': line ' + IntToStr(ALineNo) + #13;
     s := s + AText;
 
     self.lastErr := s;
-    writeMyFile(uPHPMod.progDir + 'errors.log', s);
+    {$IFNDEF NO_DEBUG}
+      writeMyFile(uPHPMod.progDir + 'errors.log', s);
+    {$ENDIF}
     ShowMessage(S);
   end;
 end;

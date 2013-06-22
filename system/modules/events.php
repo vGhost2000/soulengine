@@ -62,7 +62,19 @@ class eventEngine {
             }
         }
     }
-    
+
+
+	public static function getEvents($object, $type)
+	{
+		$object = strtolower($object);
+		$type   = strtolower($type);
+		if (!isset(self::$DATA[$object][$type])) {
+			return array();
+		}
+		return self::$DATA[$object][$type];
+	}
+
+
     static function setForm($form = false){
         
         global $_FORMS, $formSelected;

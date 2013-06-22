@@ -848,6 +848,12 @@ object phpMOD: TphpMOD
             ParamType = tpUnknown
           end>
         OnExecute = PHPLibraryFunctions68Execute
+      end
+      item
+        FunctionName = 'check_code_for_errors'
+        Tag = 0
+        Parameters = <>
+        OnExecute = checkCodeForErrors
       end>
     Left = 536
     Top = 256
@@ -2682,9 +2688,9 @@ object phpMOD: TphpMOD
   end
   object PHPEngine: TPHPEngine
     OnScriptError = PHPEngineScriptError
+    OnLogMessage = PHPEngineLogMessage
     RegisterGlobals = False
     Constants = <>
-    DLLFolder = 'c:\php\'
     ReportDLLError = True
     Left = 24
     Top = 8

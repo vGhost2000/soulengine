@@ -5,11 +5,11 @@ complete_Funcs::initF();
 class complete_Funcs {
     
     static $sourceDirs;
-    static $sourceFiles;
+    static $sourceFiles = array();
     
     function initF(){
         
-        $engineDir = replaceSl( realpath(dirname(EXE_FILE)).'/core/' );
+        /*$engineDir = replaceSl( realpath(dirname(EXE_FILE)).'/core/' );
         self::$sourceFiles[] = $engineDir . '/main/utils.php';
         self::$sourceFiles[] = $engineDir . '/main/messages.php';
         self::$sourceFiles[] = $engineDir . '/main/osapi.php';
@@ -32,6 +32,7 @@ class complete_Funcs {
         
         self::$sourceFiles[] = $engineDir . '/debug/errors.php';
         self::$sourceFiles[] = $engineDir . '/game/OMEGA.php';
+		*/
     }
     
     function getInline($params, $defaults = false){
@@ -62,11 +63,10 @@ class complete_Funcs {
         global $projectFile;
         $funcs = array();
         
-        $files = findFiles(dirname($projectFile).'/scripts/','php',false,true);
-        $files = array_merge($files, self::$sourceFiles, findFiles(DOC_ROOT.'/modules/',array('php','inc'),false,true));
-        
+        $files = findFilesV2(dirname($projectFile).'/scripts/','php',false,true);
+        $files = array_merge($files, self::$sourceFiles, findFilesV2('phar://system.phar/modules/', array('php','inc'), false, true));
+
         foreach($files as $file){
-            
             $info = PHPSyntax::analizFile( $file, dirname($projectFile) );
             
             foreach($info['functions'] as $func){

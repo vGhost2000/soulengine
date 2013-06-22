@@ -4,17 +4,21 @@
 {$mode objfpc}{$H+}
 {$endif}
 
+{$I 'sDef.inc'}
+
 interface
 
 uses
   Classes, SysUtils, Forms, php4delphi, zendAPI, phpAPI, PHPTypes,
   regGui, guiComponents, guiForms, guiProperties, dsUtils,
-  uPHPMod, WinApi.Windows, MD5,
-  {$IFDEF ADD_CHROMIUM}
-  guiChromium,
-  {$ENDIF}
-
-  uPhpEvents;
+  uPHPMod, WinApi.Windows, MD5, uPhpEvents
+    {$IFDEF SHOW_DEBUG_MESSAGES}
+      , Vcl.Dialogs
+    {$ENDIF}
+    {$IFDEF ADD_CHROMIUM}
+      , guiChromium
+    {$ENDIF}
+  ;
 
 var
   myPHPEngine: TPHPEngine;
@@ -82,6 +86,12 @@ begin
   addVar('progDir',   uPHPMod.progDir);
   addVar('moduleDir', uPHPMod.moduleDir);
   addVar('engineDir', uPHPMod.engineDir);
+
+  {$IFDEF NO_DEBUG}
+    uPHPMod.phpMOD.RunCode('<?php define("vGDEBUG", false); ?>');
+  {$ELSE}
+    uPHPMod.phpMOD.RunCode('<?php define("vGDEBUG", true); ?>');
+  {$ENDIF}
 end;
 
 
@@ -107,6 +117,14 @@ begin
     MessageBox(0, 'Core archive builder script failed build archive.', 'Fatal error', mb_Ok or MB_ICONERROR);
     exit;
   end;
+
+  {$IFNDEF NO_DEBUG}
+    uPHPMod.phpMOD.RunCode('<?php if (!class_exists("CoreBuilder")) {' +
+      'require_once("phar://core.phar/coreBuilder.php");} ' +
+      'CoreBuilder::buildFrameWork(true); ?>'
+    );
+  {$ENDIF}
+
 
   // чекнем контрольную сумму архива с core скриптами
   if (core_phar_md5 <> 'core_' + 'phar_md5' + '0000000000000000000')
@@ -157,6 +175,13 @@ begin
 
   {$IFNDEF NO_DEBUG}
     uPHPMod.phpMOD.RunCode('<?php CoreBuilder::buildSystemIDE(true); ?>');
+  {$ELSE}
+    if 'system_phar_md500000000000000000' <> xMD5_File(uPHPMod.progDir + 'system.phar') then begin
+      {$IFDEF SHOW_DEBUG_MESSAGES}
+        showmessage('Wrong system.phar, APPLICATION.Terminate');
+      {$ENDIF}
+      exit;
+    end;
   {$ENDIF}
 
   uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "system.phar", "system.phar");' +

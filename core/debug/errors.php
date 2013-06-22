@@ -217,7 +217,7 @@ function err_status($value = null, $force = false){
     $GLOBALS['__error_last']  = false;
     if ($value===null)
         return $GLOBALS['__show_errors'];
-    else{ if (!$force)$value=true;
+    else{ if (!$force && !vGDEBUG)$value=false;
         $res = $GLOBALS['__show_errors'];
         $GLOBALS['__show_errors'] = $value;
         return $res;
@@ -244,3 +244,21 @@ err_no();
     date_default_timezone_set(date_default_timezone_get());
     ini_set('date.timezone', date_default_timezone_get());
 err_yes();
+
+
+function __dt()
+{
+	if (vGDEBUG) {
+		$args = func_get_args();
+		if ($args) {
+			$args = print_r($args, true);
+		} else {
+			$args = 'no args';
+		}
+		ob_start();
+		debug_print_backtrace();
+		$text = $args . "\n" . ob_get_clean();
+		file_put_contents(DOC_ROOT . 'php_err.log', $text . "\n\n\n", FILE_APPEND | LOCK_EX);
+		pre($text);
+	}
+}

@@ -1,4 +1,5 @@
-<?
+<?php
+
 /* --------------------------------------- */
 define('nil',-1);
 
@@ -908,6 +909,15 @@ function c($str, $check_thread = true){
     $result = asObject($res,rtii_class($res->self));
     
     return $result;
+}
+
+function ic($str, $check_thread = true)
+{
+	$obj = c($str, $check_thread);
+	if ($obj instanceof DebugClass || $obj instanceof ThreadDebugClass) {
+		$obj->___hide_error_to_log = true;
+	}
+	return $obj;
 }
 
 

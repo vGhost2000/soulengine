@@ -3,60 +3,8 @@
 class mySyntaxCheck {
     
     static $errors;
-    static $noerrors;
-    
-    function saveFiles($dir, $form, $obj_name){
-        
-        $form     = strtolower($form);
-        $obj_name = strtolower($obj_name);
-        $result = array();
-        if ($form == $obj_name)
-            $eventList = eventEngine::$DATA[$form]['--fmedit'];
-        else
-            $eventList = eventEngine::$DATA[$form][$obj_name];
-            
-        foreach ($eventList as $event=>$code){
-            
-            
-            $code = 'if (!function_exists("my_func")){ function my_func() { '.$code."\n".'} }';
-            if ( in_array(md5($code),self::$noerrors) || !trim($code) ) continue;
-            
-            if ($form == $obj_name)
-                $file = $dir.'/'.$form.'.'.$event.'.php';                
-            else 
-                $file = $dir.'/'.$form.'.'.$obj_name.'.'.$event.'.php';
-            
-            
-            file_p_contents($file, $code);
-            $result[] = replaceSr($file);
-        }
-        
-        return $result;
-    }
-    
-    function parseErrors($file){
-        
-        $result = file($file);
-        $dir    = dirname($file);
-        
-        foreach ($result as $line){
-            $info = explode('|',$line);
-            if (trim($info[1])){ // ���� ���� ������
-                
-                $tmp = explode('.', basenameNoExt($info[0]));
-                $event = $tmp[count($tmp)-1];
-                $form  = $tmp[0];
-                $obj   = count($tmp)==2 ? '' : $tmp[1];
-                
-                self::$errors[] = array('msg'=>trim($info[1]), 'type'=>(int)$info[2],
-                                        'line'=>(int)$info[3], 'event'=>$event,
-                                        'form'=>$form, 'obj'=>$obj);
-            } else {
-                
-                self::$noerrors[] = md5_file($dir.'/'.$info[0]);
-            }
-        }
-    }
+    static $noerrors = array();
+	public static $code_to_check;
     
     function showErrors(){
         
@@ -71,8 +19,8 @@ class mySyntaxCheck {
                 $obj_name .= '->'.$err['obj'];
                 
             if ($obj_name=='___scripts'){
-                $obj_name = t('������ �������');
-                $err['event'] = '/scripts/'.$err['event'].'.php';
+                $obj_name = t('Скрипт проекта');
+                $err['event'] = $err['event'];
             }
                 
             $line = '['.t('Error').']: {'.$obj_name.', '.t($err['event']).'}  '.$err['msg'].' '.t('on line').' '.$err['line'];
@@ -83,59 +31,122 @@ class mySyntaxCheck {
         if (count(self::$errors)>0)
         message_beep(MB_ICONERROR);
     }
-    
-    function checkProject($prefix = ''){
-        
-        global $projectFile;
-        self::$errors = array();
-        
-        if (!$prefix)
-            $prefix = md5($projectFile);
-        
-        $dir   = TEMP_DIR.'/devels3/syntaxcheck/'.$prefix.'/';
-        $list  = myProject::getFormsObjects();
-        $files = array();
-        
-        if (file_exists($dir.'/noerror.log')){
-            
-            self::$noerrors = explode("\n", file_get_contents($dir.'/noerror.log'));
-        }
-        
-        foreach ( $list as $form => $objs ){
-            
-            $files = array_merge( $files, self::saveFiles($dir, $form, $form) );
-            foreach ($objs as $obj)
-                $files = array_merge( $files, self::saveFiles($dir, $form, $obj['NAME']) );    
-        }
-        
-        
-        $scripts = findFiles( dirname($projectFile).'/scripts/', 'php' );
-        foreach ($scripts as $file){
-            copy(dirname($projectFile).'/scripts/'.$file, $dir.'/___scripts.'.$file);
-            $files[] = $dir.'/___scripts.'.$file;
-        }
-        
-        
-        if (count($files)==0) return true;
-        file_p_contents($dir.'/files.chk', implode("\n", $files));
-        
-        
-        Kill_Task('phpUtils.exe');
-        shell_execute_wait2(SYSTEM_DIR . '/../phpUtils.exe','"'.$dir.'/files.chk" "'.$dir.'/error.log"', 'open', SW_HIDE);
-        
-        self::parseErrors($dir.'/error.log');
-        file_put_contents($dir.'/noerror.log', implode("\n", self::$noerrors));
-        
-        foreach ($files as $file)
-            unlink($file);
-        
-        
-        if (count(self::$errors)>0)
-            return false;
-        else
-            return true;
-    }
-    
+
+
+	/*
+	*	Метод проверяет ошибки синтаксиса в исходном коде и результат заносит в массив self::$errors
+	*
+	*	@param  string  проверяемуй php код
+	*	@param  string  имя проверяемого события, путь и имя файла если проверяется файл
+	*	@param  string  имя формы на которой находится комопнент, "___scripts" в случае если проверяется файл скрипта из папки scripts
+	*	@param  string  имя компонента, события которого проверять, false в случае если это файл.
+	*
+	*	@return void
+	*/
+	private static function doCheckSintaxNew($code, $event, $form, $component)
+	{
+		self::$code_to_check = $code;
+		check_code_for_errors();
+
+		if (!self::$code_to_check) {
+			return;
+		}
+
+		// parse error|2|8
+		$buf = explode('|', self::$code_to_check);
+		self::$errors[] = array(
+			'msg'   => $buf[0],
+			'type'  => (int)$buf[1],
+			'line'  => (int)$buf[2],
+			'event' => $event,
+			'form'  => $form,
+			'obj'   => $component
+		);
+	}
+
+
+	/*
+	*	Метод проверяет ошибки синтаксиса файла проекта из scripts или события, если передан второй параметр
+	*
+	*	@param  string  имя файла или формы у которой проверять события
+	*	@param  string  имя компонента, события которого проверять
+	*
+	*	@return void
+	*/
+	private static function checkSintaxNew($object, $component = false)
+	{
+		if (!$component) {
+			$code = trim(file_get_contents($object));
+			if (preg_match('#^\<\?(?:php)?(.+)\?\>$#si', $code, $m)) {
+				$code = $m[1];
+			}
+
+			self::doCheckSintaxNew($code, $object, '___scripts', false);
+			return;
+		}
+
+		if ($object == $event) {
+			$eventList = eventEngine::getEvents($object, '--fmedit');
+		} else {
+			$eventList = eventEngine::getEvents($object, $component);
+		}
+
+		foreach ($eventList as $event => $code) {
+			self::doCheckSintaxNew($code, $event, $object, $component);
+		}
+	}
+
+
+	/*
+	*	Метод запускает проверку кода через отдельное событие delphi (runkit_lint сцуко генерит fatal error /!\текст/!\ в "консоль SAPI",
+	*	а php4delhi его как fatal error воспринимает и прерывает дальнейшее исполнение скрипта)
+	*	Данный говонохак позволяет выполнить код как бы в отдельном "событии" и перехватить fatal error от php4delphi
+	*
+	*	@return void
+	*/
+	public static function doCheckCodeErrors()
+	{
+		runkit_lint(self::$code_to_check);
+		self::$code_to_check = false;
+	}
+
+
+	/*
+	*	Метод проверяет файлы и события проекта на синтаксические ошибки в коде
+	*
+	*	@return boolean результат успешной проверки на безошибочность
+	*/
+	function checkProject()
+	{
+		global $projectFile;
+
+		self::$errors = array();
+		$list  = myProject::getFormsObjects();
+
+		// проверяем синтаксис событий
+		foreach ($list as $form => $objs) {
+			self::checkSintaxNew($form, $form);
+			foreach ($objs as $obj) {
+				self::checkSintaxNew($form, $obj['NAME']);
+			}
+		}
+
+		// проверяем синтаксис файлов в папке scripts
+		$scripts = findFilesV2( dirname($projectFile) . '/scripts/', 'php|inc', true, true);
+		foreach ($scripts as $file){
+			self::checkSintaxNew($file);
+		}
+
+		// file_put_contents($dir.'noerror.log', implode("\n", self::$noerrors));       НАХРЕНА ???
+
+		if (count(self::$errors) > 0) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+
     static function clickError($self){
         
         $index = c($self)->itemIndex;
@@ -183,7 +194,7 @@ class mySyntaxCheck {
             
             global $projectFile;
             
-            run(dirname($projectFile).'/scripts/'.$error['event'].'.php');
+            run($error['event']);
             return;
         }
         

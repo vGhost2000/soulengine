@@ -1,42 +1,42 @@
 <?
 
-class Localization {
-    
-    static function init() {
-        
-        $lang_dir  = defined('USER_LANG_DIR') ? USER_LANG_DIR : 'lang';
-        $lang_file = DOC_ROOT.'/'.$lang_dir.'/'.$GLOBALS['__LOCALE_LANG'].'/messages.php';
-	
-        if (isset($GLOBALS['__LANG_MESSAGES'])) unset($GLOBALS['__LANG_MESSAGES']);
-            
-	$GLOBALS['__LANG_MESSAGES'] = array();
-			
-        
-	    if (file_exists($lang_file)){
-		    
-		    require_once $lang_file;
-		    global $__M; Localization::setMsgArr($__M); unset ($__M);
-		    setlocale(LC_ALL, strtolower($GLOBALS['__LOCALE_LANG']).'_'.strtoupper($GLOBALS['__LOCALE_LANG']));
-	    }
-    }
-    
-    // 
-    static function inc($file){
-	
-	$file = replaceSl($file);
-	$dir = dirname($file);
-	
-	$lang_dir  = defined('USER_LANG_DIR') ? USER_LANG_DIR : 'lang';
-        $lang_file = $dir.'/'.$lang_dir.'/'.$GLOBALS['__LOCALE_LANG'].'/messages.php';
-	
-	if (file_exists($lang_file)){
-	    
-	    require_once $lang_file;
-	    
-	    global $__M; Localization::setMsgArr($__M); unset ($__M);
+class Localization
+{
+
+	public static function init()
+	{
+		$lang_dir  = defined('USER_LANG_DIR') ? USER_LANG_DIR : 'phar://system.phar/lang';
+		$lang_file = $lang_dir . '/' . $GLOBALS['__LOCALE_LANG'] . '/messages.php';
+
+		if (isset($GLOBALS['__LANG_MESSAGES'])) unset($GLOBALS['__LANG_MESSAGES']);
+
+		$GLOBALS['__LANG_MESSAGES'] = array();
+
+		if (file_exists($lang_file)){
+			require_once $lang_file;
+			global $__M; Localization::setMsgArr($__M); unset ($__M);
+			setlocale(LC_ALL, strtolower($GLOBALS['__LOCALE_LANG']).'_'.strtoupper($GLOBALS['__LOCALE_LANG']));
+		} else {
+			throw new Exception($lang_file);
+		}
 	}
-    }
-    
+
+
+	public static function inc($file)
+	{
+		$file = replaceSl($file);
+		$dir = dirname($file);
+		
+		$lang_dir  = defined('USER_LANG_DIR') ? USER_LANG_DIR : 'phar://system.phar/lang';
+		$lang_file = $lang_dir . '/' . $GLOBALS['__LOCALE_LANG'] . '/messages.php';
+		
+		if (file_exists($lang_file)){
+			require_once $lang_file;
+			global $__M; Localization::setMsgArr($__M); unset ($__M);
+		}
+	}
+
+
     static function incXml($dir, $lang = false){
 	
 	if (!$lang)
@@ -79,9 +79,9 @@ class Localization {
 	    $s1 = isset($GLOBALS['__LANG_MESSAGES'][$name]);
 	    $s2 = isset($GLOBALS['__LANG_MESSAGES'][$name.'.']);
 			
-	    if (!$s1 and !$s2)
+	    if (!$s1 and !$s2) {
 		    return $name;
-	    else {
+		} else {
 		    if ($s1) return $GLOBALS['__LANG_MESSAGES'][$name];
 		    if ($s2) return $GLOBALS['__LANG_MESSAGES'][$name.'.'].'.';
 	    }

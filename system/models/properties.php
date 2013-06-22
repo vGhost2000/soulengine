@@ -1126,9 +1126,10 @@ class myProperties {
         
         return (array)$componentMethods[$class];
     }
-    
-    static function fixSpliterMoved($self){
-        
-        c('fmPropsAndEvents->tabProps',1)->repaint();
-    }
+
+
+	static function fixSpliterMoved($self)
+	{
+		ic('fmPropsAndEvents->tabProps',1)->repaint();
+	}
 }

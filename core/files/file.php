@@ -84,9 +84,9 @@ function findFilesV2($dir, $ext = null, $recursive = false, $with_dir = false)
 	$result = array();
 	foreach ($iterator as $fileinfo) {
 		if (is_array($fileinfo)) {
-			$result[] = $with_dir ? ($recursive ? $fileinfo[0] : $dir . $fileinfo[0]) : basename($fileinfo[0]);
+			$result[] = str_replace('\\', '/', $with_dir ? ($recursive ? $fileinfo[0] : $dir . $fileinfo[0]) : basename($fileinfo[0]));
 		} else {
-			$result[] = $with_dir ? $fileinfo->getPathname() : $fileinfo->getFilename();
+			$result[] = str_replace('\\', '/', $with_dir ? $fileinfo->getPathname() : $fileinfo->getFilename());
 		}
 	}
 	return $result;
