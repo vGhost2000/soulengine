@@ -7,7 +7,7 @@ class myMasters {
     
     static function generate(){
         
-        $utils = findDirs(SYSTEM_DIR . self::UTIL_DIR);
+        $utils = findDirsV2('phar://system.phar' . self::UTIL_DIR);
         
         foreach ($utils as $code)
             self::createMaster($code);

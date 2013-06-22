@@ -36,16 +36,16 @@ $dsg_cfg = new TConfigIni($cfg_array);
 $dsg_cfg->loadFromFile(DS_USERDIR .'config.ini');
 myVars::set($dsg_cfg, 'dsg_cfg');
 
-    require 'design/dialogs.php';
+    require 'phar://system.phar/design/dialogs.php';
 }
 
 
-require 'design/components.php';
+require 'phar://system.phar/design/components.php';
 
 
 if (!EMULATE_DVS_EXE){  
     
-    require 'design/events.php';    
+    require 'phar://system.phar/design/events.php';    
 
     c('fmLogoin->label5')->show();
     $GLOBALS['APPLICATION']->processMessages();    

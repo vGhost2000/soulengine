@@ -152,19 +152,21 @@ class myUtils {
         $form->show();
     }
 
-    static function loadForCache($form = false, $no_clear_sc = false){
-        
+	static function loadForCache($form = false, $no_clear_sc = false)
+	{
         global $_sc;
-        
-        if (!$form)
-            $form = $GLOBALS['fmEdit'];
-        
-        
-        if ($_sc && !$no_clear_sc){
-            $_sc->free();
-	    $_sc = false;
-        }
-        
+
+		if (!$form) {
+			$form = $GLOBALS['fmEdit'];
+		}
+
+		if ($_sc && !$no_clear_sc) {
+			if (!($_sc instanceof stdClass)) {
+				$_sc->free();
+			}
+			$_sc = false;
+		}
+
         $form->onMouseDown = 'myDesign::mouseDown';
         $form->onMouseMove = 'myDesign::mouseMove';
         $form->onMouseUp   = 'myDesign::mouseUp';
@@ -239,7 +241,6 @@ class myUtils {
     }
     
     static function loadForm($name){
-        
         global $fmMain, $_sc, $projectFile, $myInspect, $fmEdit, $formSelected, $_FORMS, $myProperties, $myEvents;
         $file = dirname($projectFile) .'/'. $name . '.dfm';
         
@@ -273,7 +274,6 @@ class myUtils {
             $fmEdit->repaint();
             
         } else {
-            
             
             $fmEdit->hide();
             $fmEdit->name = '';

@@ -48,7 +48,8 @@ class TCategoryButtons extends TControl {
         
         $groups = $this->groups;
         $sec = _c($groups[$group]);
-        
+        //if (!is_array($items))throw new exception(123);
+		if (is_array($items))
         foreach ($groups as $tmp=>$self)
             _c($self)->collapsed = true;
             

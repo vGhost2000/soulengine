@@ -5,7 +5,7 @@
 $_components = array();
 $componentProps   = array();
 $componentEvents  = array();
-$files = findFiles(dirname(__FILE__) . '/components/','php');
+$files = findFilesV2('phar://system.phar/design//components/', 'php');
 $dir_n  = dirname(__FILE__);
 
 foreach ($files as $file){
@@ -31,24 +31,24 @@ foreach ($files as $file){
     }
 }
 
-if (EMULATE_DVS_EXE) return;
+if (!EMULATE_DVS_EXE) {
     
-    $files = findFiles($dir_n . '/components/properties/','php');
+    $files = findFilesV2($dir_n . '/components/properties/','php');
     foreach ($files as $file){
         $componentProps[basenameNoExt($file)] = include($dir_n . '/components/properties/' . $file);
     }
     
-    $files = findFiles($dir_n . '/components/events/','php');
+    $files = findFilesV2($dir_n . '/components/events/','php');
     foreach ($files as $file){
         $componentEvents[basenameNoExt($file)] = include($dir_n . '/components/events/' . $file);
     }
     
-    $files = findFiles($dir_n . '/components/methods/','php');
+    $files = findFilesV2($dir_n . '/components/methods/','php');
     foreach ($files as $file){
         $componentMethods[basenameNoExt($file)] = include($dir_n . '/components/methods/' . $file);
     }
 	
-    $files = findFiles($dir_n . '/components/modifers/','php');
+    $files = findFilesV2($dir_n . '/components/modifers/','php');
     foreach ($files as $file){
         require($dir_n . '/components/modifers/' . $file);
     }
@@ -56,7 +56,7 @@ if (EMULATE_DVS_EXE) return;
     BlockData::sortList($_components, 'SORT');
     
     
-    $files = findFiles($dir_n . '/editor_types/','php');
+    $files = findFilesV2($dir_n . '/editor_types/','php');
     foreach ($files as $file)
         require $dir_n . '/editor_types/' . $file;
 	
@@ -121,3 +121,5 @@ if (EMULATE_DVS_EXE) return;
         
         $_winControls[] = 'TTabSheet';
         myVars::set2($_winControls,'_winControls');
+
+}

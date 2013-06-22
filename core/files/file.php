@@ -64,9 +64,39 @@ function getFileName($str, $check = true){
     return $str;
 }
 
+
+function findFilesV2($dir, $ext = null, $recursive = false, $with_dir = false)
+{
+	if (!is_dir($dir)) {
+		return array();
+	}
+
+	if ($recursive) {
+		$iterator = new RecursiveDirectoryIterator($dir);
+		$iterator = new RecursiveIteratorIterator($iterator);
+	} else {
+		$iterator = new DirectoryIterator($dir);
+	}
+	if ($ext) {
+		$iterator = new RegexIterator($iterator, '#^.+\.(' . $ext . ')$#', RecursiveRegexIterator::GET_MATCH);
+	}
+
+	$result = array();
+	foreach ($iterator as $fileinfo) {
+		if (is_array($fileinfo)) {
+			$result[] = $with_dir ? ($recursive ? $fileinfo[0] : $dir . $fileinfo[0]) : basename($fileinfo[0]);
+		} else {
+			$result[] = $with_dir ? $fileinfo->getPathname() : $fileinfo->getFilename();
+		}
+	}
+	return $result;
+}
+
+
 // поиск файлов в папке... в подпапках не ищет.
 // Можно искать по расширению exts - список расширений
 function findFiles($dir, $exts = null, $recursive = false, $with_dir = false){
+	if (!preg_match('#^phar#', $dir))throw new Exception($dir);
     $dir = replaceSl($dir);
     
     $result = array();
@@ -94,8 +124,21 @@ function findFiles($dir, $exts = null, $recursive = false, $with_dir = false){
     return $result;
 }
 
+function findDirsV2($dir)
+{
+	$result = array();
+	foreach (new DirectoryIterator($dir) as $fileinfo) {
+		$name = $fileinfo->getFilename();
+		if ($fileinfo->getType() == 'dir' && $name != '.' && $name != '..') {
+			$result[] = $name;
+		}
+	}
+	return $result;
+}
+
+
 function findDirs($dir){
-    
+    throw new Exception($dir);
     $dir = replaceSl($dir);
     
     if (!is_dir($dir)) return array();

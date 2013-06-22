@@ -190,6 +190,7 @@ function __error_hook($type, $filename, $line, $msg){
 }
 
 function checkFile($filename){
+	throw new Exception($dir);
     $filename = str_replace('//','/',replaceSl($filename));
     
     if (!file_exists(DOC_ROOT . $filename) && !file_exists($filename)){
@@ -198,17 +199,25 @@ function checkFile($filename){
     }
 }
 
+function checkFileV2($filename)
+{
+	if (!file_exists($filename) && !file_exists(DOC_ROOT . $filename)){
+		error_message("'$filename' is not exists!");
+		die();
+	}
+}
+
 function err_no(){
     $GLOBALS['__show_errors'] = false;
     $GLOBALS['__error_last']  = false;
 }
 
-function err_status($value = null){
+function err_status($value = null, $force = false){
     
     $GLOBALS['__error_last']  = false;
     if ($value===null)
         return $GLOBALS['__show_errors'];
-    else{
+    else{ if (!$force)$value=true;
         $res = $GLOBALS['__show_errors'];
         $GLOBALS['__show_errors'] = $value;
         return $res;

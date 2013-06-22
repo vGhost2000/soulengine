@@ -39,7 +39,7 @@ if ($prs2_ext=='dvsexe' || $prs2_ext=='mspprexe'){
 	define('DOC_ROOT2', str_replace('//','/',replaceSl($progDir)));
 	$progDir = replaceSr(dirname( param_str(2) )).'\\';
 } 
-define('DOC_ROOT',str_replace('//','/',replaceSl($progDir)) . 'system/');
+define('DOC_ROOT',str_replace('//','/',replaceSl($progDir)));
 define('MODULE_DIR',replaceSl($moduleDir));
 define('ENGINE_DIR',replaceSl($engineDir));
 define('DRIVE_CHAR', $progDir[0]);

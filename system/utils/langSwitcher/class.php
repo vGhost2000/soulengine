@@ -5,8 +5,7 @@ function langSwitcher($lang){
     myOptions::set('main','lang',$lang);
 }
 
-$langs = findFiles(DOC_ROOT.'/lang/','lng',false,true);
-//pre($langs);
+$langs = findFilesV2(DOC_ROOT . 'system/lang/', 'lng', false, true);
 
     foreach ($langs as $lang){
         

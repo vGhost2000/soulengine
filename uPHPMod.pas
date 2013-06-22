@@ -1570,19 +1570,18 @@ end;
 
 { TphpMOD }
 
-{
-procedure writeMyFile(S: string);
+
+procedure writeMyFile(Name, S: string);
 var
   myFile : TextFile;
   text   : string;
   i      : Integer;
 begin
-  inc(vGhostCounter);
-  AssignFile(myFile, '11_Test' + inttostr(vGhostCounter) + '.php');
-  ReWrite(myFile);
-  Write(myFile, S);
+  AssignFile(myFile, Name);
+  Append(myFile);
+  Write(myFile, S + #13 + #13 + #13);
   CloseFile(myFile);
-end;}
+end;
 
 procedure TphpMOD.RunCode(S: string);
 begin
@@ -2479,35 +2478,38 @@ end;
 procedure TphpMOD.PHPEngineScriptError(Sender: TObject; AText: AnsiString;
   AType: integer; AFileName: AnsiString; ALineNo: integer);
 var
-  s: string;
+  s, err_code: string;
   PHP: TpsvPHP;
 begin
   {$IFNDEF NO_DEBUG}
     showmessage(AText);
   {$ENDIF}
 
-  if fatal_handler_php <> '' then
-  begin
-
+  if fatal_handler_php <> '' then begin
     PHP := TpsvPHP(Sender);
 
+    err_code := fatal_handler_php + '(' + IntToStr(integer(AType)) + ',' +
+        '''' + AddSlashes(AText) + ''', ''' + AddSlashes(AFileName) +
+        ''', ' + IntToStr(ALineNo) + ');'
+    ;
     if Assigned(PHP.Thread) then
     begin
-      PHP.RunCode(fatal_handler_php + '(' + IntToStr(integer(AType)) + ',' +
-        '''' + AddSlashes(AText) + ''', ''' + AddSlashes(AFileName) +
-        ''', ' + IntToStr(ALineNo) + ');');
-    end
-    else
-      RunCode(fatal_handler_php + '(' + IntToStr(integer(AType)) + ',' +
-        '''' + AddSlashes(AText) + ''', ''' + AddSlashes(AFileName) +
-        ''', ' + IntToStr(ALineNo) + ');');
-  end
-  else
-  begin
+      PHP.RunCode(err_code);
+      {$IFNDEF NO_DEBUG}
+        writeMyFile(uPHPMod.progDir + 'errors.log', AText + #13 + err_code);
+      {$ENDIF}
+    end else begin
+      RunCode(err_code);
+      {$IFNDEF NO_DEBUG}
+        writeMyFile(uPHPMod.progDir + 'errors.log', AText + #13 + err_code);
+      {$ENDIF}
+    end;
+  end else begin
     s := AFileName + ': line ' + IntToStr(ALineNo) + #13;
     s := s + AText;
 
     self.lastErr := s;
+    writeMyFile(uPHPMod.progDir + 'errors.log', s);
     ShowMessage(S);
   end;
 end;

@@ -13,7 +13,7 @@
 
     define_ex('DV_YEAR', 2013);
     define_ex('DV_VERSION', '3.0.2.0');
-    define_ex('DV_PREFIX','beta 2');
+    define_ex('DV_PREFIX','Reloaded');
     
     if (!EMULATE_DVS_EXE){
         loader::lib('data');
@@ -31,12 +31,12 @@
 
     if (!EMULATE_DVS_EXE) loader::model('compile.php');
 
-    loader::model('prover');
+    //loader::model('prover');
     loader::modules('modules');
     loader::lib('syntax');
     loader::lib('zip');
     loader::lib('vseditor');
-    loader::lib('synedit');
+    //loader::lib('synedit');
     loader::lib('docking');
     loader::lib('catbuttons');
     loader::lib('bcompiler');
@@ -58,7 +58,7 @@
         loader::model('project');
         //loader::model('options');
         loader::model('modules');
-        loader::model('novisual');
+        //loader::model('novisual');
         loader::model('winres');
         loader::model('upx');
         loader::model('history');

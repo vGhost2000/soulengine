@@ -42,8 +42,8 @@ class myComplete {
         
         $myComplete = new myComplete;
         
-        $dir = DOC_ROOT . '/design/complete/';
-        $completes = findDirs($dir);
+        $dir = 'phar://system.phar/design/complete/';
+        $completes = findDirsV2($dir);
         foreach ($completes as $code){
             
             $i_dir = $dir . $code . '/';
@@ -64,7 +64,7 @@ class myComplete {
             $completeList[] = $info;
         }
         
-        // сортируем весь массив по полю СОРТ
+		// сортируем весь массив по полю СОРТ
         BlockData::sortList($completeList, 'SORT');
         
        // $completeList =& $completes;

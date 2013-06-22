@@ -9,7 +9,7 @@ interface
 uses
   Classes, SysUtils, Forms, php4delphi, zendAPI, phpAPI, PHPTypes,
   regGui, guiComponents, guiForms, guiProperties, dsUtils,
-  uPHPMod, WinApi.Windows,
+  uPHPMod, WinApi.Windows, MD5,
   {$IFDEF ADD_CHROMIUM}
   guiChromium,
   {$ENDIF}
@@ -86,6 +86,10 @@ end;
 
 
 function buildFrameWork(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil): boolean;
+const
+  core_phar_md5:          ansistring = 'core_phar_md50000000000000000000';
+  modules_phar_md5:       ansistring = 'modules_phar_md50000000000000000';
+  main_program_phar_md5:  ansistring = 'main_program_phar_md500000000000';
 begin
   result := false;
 
@@ -104,7 +108,61 @@ begin
     exit;
   end;
 
-  uPHPMod.phpMOD.RunCode('<?php require_once("phar://" . $GLOBALS["progDir"] . "core.phar/include.php"); ?>');
+  // чекнем контрольную сумму архива с core скриптами
+  if (core_phar_md5 <> 'core_' + 'phar_md5' + '0000000000000000000')
+    AND (core_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'core.phar')))
+  then begin
+    {$IFDEF SHOW_DEBUG_MESSAGES}
+      showmessage('Wrong core.phar, APPLICATION.Terminate');
+    {$ENDIF}
+    exit;
+  end;
+  uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "core.phar", "core.phar");' +
+    ' require_once("phar://core.phar/include.php"); ?>'
+  );
+
+  if FileExists(uPHPMod.progDir + 'modules.phar') then begin
+    // чекнем контрольную сумму архива со скриптами дополнительных модулей прокта
+    if (modules_phar_md5 <> 'modules' + '_phar_' + 'md50000000000000000')
+      AND (modules_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'modules.phar')))
+    then begin
+      {$IFDEF SHOW_DEBUG_MESSAGES}
+        showmessage('Wrong modules.phar, APPLICATION.Terminate');
+      {$ENDIF}
+      exit;
+    end;
+    uPHPMod.phpMOD.RunCode('<?php require_once("phar://" . $GLOBALS["progDir"] . "modules.phar/include.php"); ?>');
+  end;
+
+  if FileExists(uPHPMod.progDir + 'main_program.phar') then begin
+    // чекнем контрольную сумму архива со скриптами пользовательской программы
+    if (main_program_phar_md5 <> 'main_' + 'program_phar' + '_md500000000000')
+      AND (main_program_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'main_program.phar')))
+    then begin
+      {$IFDEF SHOW_DEBUG_MESSAGES}
+        showmessage('Wrong main_program.phar, APPLICATION.Terminate');
+      {$ENDIF}
+      exit;
+    end;
+    uPHPMod.phpMOD.RunCode('<?php require_once("phar://" . $GLOBALS["progDir"] . "main_program.phar/include.php"); ?>');
+    result := true;
+    exit;
+  end else if not FileExists(uPHPMod.progDir + 'system.phar') then
+    uPHPMod.phpMOD.RunCode('<?php CoreBuilder::buildSystemIDE(); ?>');
+
+  if not FileExists(uPHPMod.progDir + 'system.phar') then begin
+    MessageBox(0, 'SystemIDE archive builder script failed build archive.', 'Fatal error', mb_Ok or MB_ICONERROR);
+    exit;
+  end;
+
+  {$IFNDEF NO_DEBUG}
+    uPHPMod.phpMOD.RunCode('<?php CoreBuilder::buildSystemIDE(true); ?>');
+  {$ENDIF}
+
+  uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "system.phar", "system.phar");' +
+    ' require_once("phar://system.phar/include.pse"); ?>'
+  );
+
   result := true;
 end;
 

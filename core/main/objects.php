@@ -147,13 +147,13 @@ function uni_serialize($str){
 
 function uni_unserialize($str){
 	    
-	    $st = err_status(0);
+	    $st = err_status(0, true);
 	    $result = igbinary_unserialize(base64_decode($str));
 	    
 	    if ( err_msg() ){
 			$result = unserialize(base64_decode($str));
 	    }
-	    err_status($st);
+	    err_status($st, true);
 	    
 	    return $result;
 }

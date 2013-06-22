@@ -6,8 +6,8 @@ class myActions {
     // загружаем основаные части изи редактора действий...
     static function init(){
         
-        $dir = SYSTEM_DIR . '/design/actions/';
-        $actions = findDirs($dir);
+        $dir = 'phar://system.phar/design/actions/';
+        $actions = findDirsV2($dir);
         
         /*$actionPanel = new TButtonsPanel(c('fmPHPEditor',1));
         $actionPanel->parent = c('fmPHPEditor->panelActions');

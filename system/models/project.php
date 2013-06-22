@@ -68,28 +68,30 @@ class myProject {
             $myProject->add_info[$name] = $value;
     }
     
-    static function showIncorrect(){
-        
-        $classes = array();
-        foreach ($myProject->formsInfo as $form=>$data){
-            
-            $objs = $data['objects'];
-            foreach($objs as $o){
-                
-                if ( !class_exists($o['CLASS']) ){
-                    $classes[] = $o['CLASS'];
-                }
-            }
-        }
-        
-        array_unique($classes);
-        
-        if ( count($classes)>0 ){
-            
-            message(t('¬ проекте используютс€ следующие несуществующие классы:')."\n\r\n\r".
-                    implode(',', $classes));
-        }
-    }
+	static function showIncorrect()
+	{
+		global $myProject;
+
+		$classes = array();
+		if (!empty($myProject->formsInfo) && is_array($myProject->formsInfo)) {
+			foreach ($myProject->formsInfo as $form => $data) {
+				$objs = $data['objects'];
+				if (is_array($objs)) {
+					foreach ($objs as $o) {
+						if ( !class_exists($o['CLASS']) ){
+							$classes[] = $o['CLASS'];
+						}
+					}
+				}
+			}
+		}
+
+		array_unique($classes);
+		
+		if (count($classes)>0) {
+			message(t('¬ проекте используютс€ следующие несуществующие классы:') . "\n\r\n\r" . implode(',', $classes));
+		}
+	}
     
     static function genTabs(){
         
@@ -322,7 +324,8 @@ class myProject {
 		$demoLoad = true;
 		$objLast = c('fmMain->it_demoprojects');
 		
-		$demos = findFiles( dirname(EXE_NAME) . '/demos/', 'dvs' );
+		$demos = findFilesV2(DOC_ROOT . 'demos/', 'dvs' );
+
 		foreach ( $demos as $xfile ){
 			
 			$it = new TMenuItem($objLast);
@@ -532,7 +535,7 @@ class myProject {
         $data['eventDATA'] = eventEngine::$DATA;
         
         /* запись скриптов */
-        $scripts = findFiles($dir.'/scripts/','php');
+        $scripts = findFilesV2($dir . '/scripts/', 'php');
         foreach($scripts as $x_file)
             $data['scripts'][$x_file] = file_get_contents($dir.'/scripts/'.$x_file);
         /****************/
@@ -541,7 +544,7 @@ class myProject {
         /* запись ресурсов */
         if (trim($myProject->config['data_dir'])){
             $data_dir = $dir.'/'.$myProject->config['data_dir'].'/';
-            $files = findFiles($data_dir,null,true,true);
+            $files = findFilesV2($data_dir, null, true, true);
             foreach($files as $x_file){
                 $data['data'][ str_replace($data_dir,'/',$x_file) ] = gzcompress( file_get_contents($x_file), 9 );     
             }
@@ -562,14 +565,18 @@ class myProject {
         file_put_contents($file, $result);
     }
     
-    static function clearProject(){
+	static function clearProject()
+	{
+		global $_sc;
+
+		if (is_array(myUtils::$forms)) {
+			foreach (myUtils::$forms as $form) {
+				$form->free();
+			}
+		}
         
-	global $_sc;
-        foreach (myUtils::$forms as $form)
-            $form->free();
-        
-	$_sc = false;
-        myUtils::$forms = array();
+		$_sc = false;
+		myUtils::$forms = array();
     }
     
     // открыть файл проекта формата DVS...

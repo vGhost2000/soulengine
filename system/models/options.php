@@ -362,8 +362,12 @@ class myBackup {
 	function doInterval(){
 		
 		global $projectFile;
+
+		/* ---- бнр врн щрн, акърэ, рюйне?! ------
 		if ( !eregi('$([.\-\_a-zЮ-Ъю-ъ0-9]+)') )
 			self::$dir = 'backup';
+		*/
+		self::$dir = 'backup';
 		
 		$dir = dirname($projectFile) .'/'. self::$dir . '/';
 		
@@ -389,12 +393,16 @@ class myBackup {
 		
 		if ( $min < 1 )
 			$min = 1;
-		
-		self::$timer->interval = $min * 60000;
+
+		if (is_object(self::$timer)) {
+			self::$timer->interval = $min * 60000;
+		}
 	}
 	
 	static function setActive($active){
-		self::$timer->enable = (bool)$active;
+		if (is_object(self::$timer)) {
+			self::$timer->enable = (bool)$active;
+		}
 	}
 	
 	static function updateSettings(){

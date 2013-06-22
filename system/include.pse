@@ -1,4 +1,4 @@
-<?
+<?php
     /*
     This product includes PHP software, freely available from <http://www.php.net/software/>
     */
@@ -30,10 +30,10 @@ if (!defined('IS_APPLICATION_START')){
         $__config['config']['debug']['enabled'] = true;
         
     } else {
-        
-        set_include_path(DOC_ROOT);
-        ini_set('include_path', DOC_ROOT);
-        define('SYSTEM_DIR',DOC_ROOT);
+        $path = '.;phar://' . DOC_ROOT . 'core.phar/;phar://' . DOC_ROOT . 'sysytem.phar/;' . DOC_ROOT . ';' . DOC_ROOT . 'sysytem;';
+        set_include_path($path);
+        ini_set('include_path', $path);
+        define('SYSTEM_DIR', DOC_ROOT . 'system/');
     }
     
      
@@ -41,9 +41,9 @@ if (!defined('IS_APPLICATION_START')){
 
 
     if (!EMULATE_DVS_EXE){
-        $APPLICATION->title = 'DevelStudio 2012';
+        $APPLICATION->title = 'DevelStudio Reloaded 2013';
 	
-        $fmLogoin = TForm::loadFromFile('dfm\\uLogoin');
+        $fmLogoin = TForm::loadFromFile('dfm/uLogoIn');
         
         c('fmLogoin->Label7')->caption = 'version '.DV_VERSION;
         c('fmLogoin->Label8')->caption = '... '.DV_PREFIX;

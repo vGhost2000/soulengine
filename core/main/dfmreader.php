@@ -20,7 +20,7 @@
 function dfm_read($dfm_file_name, $aform = false, $str = false, $form_name = false, $is_runtime = false)
 {
 	if ($dfm_file_name)
-		checkFile($dfm_file_name);
+		checkFileV2($dfm_file_name);
 
 	if (!$aform)
 		$form = new TForm( $GLOBALS['APPLICATION'] );
@@ -29,11 +29,10 @@ function dfm_read($dfm_file_name, $aform = false, $str = false, $form_name = fal
 		$form->positionEx = $form->position;
 	}
 	
-	$dfm_file_name = replaceSr($dfm_file_name);
+	//$dfm_file_name = replaceSr($dfm_file_name);
 	
 	if ( !$str )
 		$str = file_get_contents($dfm_file_name);
-
 	
 		gui_readStr($form->self, $str);
 		
@@ -69,17 +68,19 @@ function dfm_read($dfm_file_name, $aform = false, $str = false, $form_name = fal
 // сохранение формы в dfm файл
 function dfm_write($dfm_file_name, TForm $form)
 {
-	
-   $dfm_file_name = replaceSr($dfm_file_name);
-   
-   $components = $form->components;
-   foreach ($components as $el)
-	if (method_exists($el, '__getAddSource')){
-		$el->__getAddSource();
-		//$help = unserialize(base64_decode($el->getHelpKeyword()));
+	$dfm_file_name = replaceSr($dfm_file_name);
+
+	$components = $form->components;
+	if (is_array($components)) {
+		foreach ($components as $el) {
+			if (method_exists($el, '__getAddSource')){
+				$el->__getAddSource();
+				//$help = unserialize(base64_decode($el->getHelpKeyword()));
+			}
+		}
 	}
-   
-   file_put_contents($dfm_file_name, gui_writeStr($form->self) );
+
+	file_put_contents($dfm_file_name, gui_writeStr($form->self) );
 }
 
 // ---------------------------- // -------------------------------------------//
@@ -94,16 +95,20 @@ function saveFormAsDfm($file,$form){
         dfm_write($file,$form);
 }
 
-function createFormWithEvents($name,$init = false){
+function createFormWithEvents($name, $init = false){
 	global $progDir;
-	$res = createForm(replaceSr(DOC_ROOT . "/" . $name . '.dfm'));
+	if (!is_file('phar://system.phar/' . $name . '.dfm')) {
+		throw new Exception('createFormWithEvents: phar://system.phar/' . $name . '.dfm');
+	}
+	$res = createForm('phar://system.phar/' . $name . '.dfm');
 	
-        if (file_exists(DOC_ROOT . '/' . $name.'.php')){
+	if (file_exists('phar://system.phar/' . $name.'.php')){
 
-                include_once(DOC_ROOT . '/' . $name.'.php');
-                if ($init)
-                        loadFormEvents($res);
-        }
+		require_once('phar://system.phar/' . $name.'.php');
+		if ($init) {
+			loadFormEvents($res);
+		}
+	}
 	return $res;
 }
 

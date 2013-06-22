@@ -5,7 +5,8 @@ global $_IMAGES16, $_IMAGES24, $_IMAGES32, $allImages;
 $allImages = array();
 $is_exists = array();
 $c         = 0;
-$files = findFiles(SYSTEM_DIR . '/images/24/',array('bmp','png','gif'));
+$files     = findFilesV2(SYSTEM_DIR . 'images/24/', 'bmp|png|gif');
+
 foreach ($files as $i=>$file){
     
     if ( in_array(basenameNoExt($file), $is_exists) ){
