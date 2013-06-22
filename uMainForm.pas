@@ -8,7 +8,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExeMod, EncdDecd, MD5, Utils, NxGrid, php4delphi, core
+  Dialogs, EncdDecd, MD5, Utils, NxGrid, php4delphi, core
   {$IFDEF VS_EDITOR}
   , uPHPCatButtons, uVSEditor
   {$ENDIF}
@@ -65,7 +65,7 @@ var
 
 implementation
 
-uses uMain, uPHPMod;
+uses uPHPMod;
 
 {$R *.dfm}
 
@@ -119,7 +119,6 @@ const
   php5ts_dll_md5: ansistring = 'php5ts_dll_md5000000000000000000';
 var
   f, s: string;
-  EM: TExeStream;
   modules : ansistring;
 begin
   Self.Left := -999;

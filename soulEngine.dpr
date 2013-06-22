@@ -6,7 +6,6 @@ uses
   Forms,
   Dialogs,
   SysUtils,
-  uMain in 'uMain.pas' {__fMain},
   uMainForm in 'uMainForm.pas' {__mainForm},
   uPHPMod in 'uPHPMod.pas' {phpMOD: TDataModule},
   uGuiScreen in 'uGuiScreen.pas',

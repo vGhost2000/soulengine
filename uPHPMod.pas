@@ -19,7 +19,7 @@ uses
   coolTrayIcon, libSysTray,
   Graphics, Dialogs, Forms, Variants, uGuiScreen, ComCtrls,
   Controls, Windows, FileCtrl, Buttons, SizeControl, ExtCtrls, Menus,
-  StdCtrls, ExeMod, ShellApi, RyMenus, CheckLst, TlHelp32, Utils,
+  StdCtrls, ShellApi, RyMenus, CheckLst, TlHelp32, Utils,
   Messages, MImage, Vcl.Imaging.GIFImg, Jpeg, Grids, CaptionedDockTree1, Clipbrd,
                                      //GifImage
   WideStrUtils,
@@ -55,6 +55,11 @@ function getIniLocation(DLLFolder: string): string;
 
 
 
+    function Stream2String(b: TStream): ansiString; overload;
+    procedure Stream2String(b: TStream; var a: ansiString); overload;
+    procedure String2Stream(a: ansiString; b: TMemoryStream);
+
+
 
 type
   TphpMOD = class(TDataModule)
@@ -75,7 +80,6 @@ type
     _Registry: TPHPLibrary;
     OSApi: TPHPLibrary;
     _Menus: TPHPLibrary;
-    _ExeMod: TPHPLibrary;
     _TLists: TPHPLibrary;
     _TSynEdit: TPHPLibrary;
     _Canvas: TPHPLibrary;
@@ -417,24 +421,6 @@ type
     procedure libFormsFunctions7Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions0Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions1Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions2Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions3Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions4Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions5Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure OSApiFunctions7Execute(Sender: TObject; Parameters: TFunctionParams;
       var ReturnValue: variant; ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure OSApiFunctions8Execute(Sender: TObject; Parameters: TFunctionParams;
@@ -461,12 +447,6 @@ type
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure _TStreamLibFunctions19Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions6Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions7Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure OSApiFunctions9Execute(Sender: TObject; Parameters: TFunctionParams;
@@ -904,12 +884,6 @@ type
     procedure _MenusFunctions17Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions8Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions9Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure _TPictureLibFunctions19Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
@@ -1127,9 +1101,6 @@ type
     procedure _BackWorkerFunctions23Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ExeModFunctions10Execute(Sender: TObject;
-      Parameters: TFunctionParams; var ReturnValue: variant;
-      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure _TPictureLibFunctions21Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
@@ -1246,10 +1217,33 @@ const
 
 implementation
 
-uses uMain, uMainForm, ImgList, Math, IniFiles, Types,
+uses uMainForm, ImgList, Math, IniFiles, Types,
   uNonVisual, uPhpEvents;
 
 {$R *.dfm}
+
+
+function Stream2String(b: TStream): ansiString; overload;
+begin
+ Stream2String(B,Result);
+end;
+
+
+procedure String2Stream(a: ansiString; b: TMemoryStream);
+begin
+  b.Position := 0;
+  b.WriteBuffer(Pointer(a)^,Length(a));
+  b.Position := 0;
+end;
+
+
+procedure Stream2String(b: TStream; var a: ansiString); overload;
+begin
+  b.Position := 0;
+  SetLength(a,b.Size);
+  b.ReadBuffer(Pointer(a)^,b.Size);
+  b.Position := 0;
+end;
 
 
 function getIniLocation(DLLFolder: string): string;
@@ -3441,60 +3435,6 @@ begin
 
 end;
 
-var
-  ExeM: TExeStream;
-
-procedure TphpMOD._ExeModFunctions0Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-begin
-  Parameters[0].VValue := StringReplace(Parameters[0].VValue, '/', '\', [rfReplaceAll]);
-  ExeM := TExeStream.Create(Parameters[0].VValue);
-end;
-
-procedure TphpMOD._ExeModFunctions10Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-begin
-  ReturnValue := ExeM.IndexOf(Parameters[0].ZendVariable.AsString) > -1;
-end;
-
-procedure TphpMOD._ExeModFunctions1Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-begin
-  ExeM.AddStringToExe(Parameters[0].ZendVariable.AsString,
-    Parameters[1].ZendVariable.AsString);
-end;
-
-procedure TphpMOD._ExeModFunctions2Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-begin
-  ZendVar.AsString := ExeM.ExtractToString(Parameters[0].VValue);
-  //ReturnValue := ExeM.ExtractToString(Parameters[0].VValue);
-end;
-
-procedure TphpMOD._ExeModFunctions3Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-begin
-  ExeM.EraseAlias(Parameters[0].VValue);
-end;
-
-procedure TphpMOD._ExeModFunctions4Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-begin
-  ExeM.SaveAsExe(Parameters[0].VValue);
-end;
-
-procedure TphpMOD._ExeModFunctions5Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-begin
-  ExeM.Free;
-end;
 
 function TempDir: string;
 var
@@ -3675,22 +3615,6 @@ begin
   initStream(Parameters);
 
   String2Stream(Parameters[1].ZendVariable.AsString, TMemoryStream(tmpST));
-end;
-
-procedure TphpMOD._ExeModFunctions6Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-begin
-  Parameters[1].VValue := StringReplace(Parameters[1].VValue, '/', '\', [rfReplaceAll]);
-  ExeM.AddFromFile(Parameters[0].VValue, Parameters[1].VValue);
-end;
-
-procedure TphpMOD._ExeModFunctions7Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-begin
-  Parameters[1].VValue := StringReplace(Parameters[1].VValue, '/', '\', [rfReplaceAll]);
-  ExeM.ExtractToFile(Parameters[0].VValue, Parameters[1].VValue);
 end;
 
 procedure TphpMOD.OSApiFunctions9Execute(Sender: TObject;
@@ -6284,25 +6208,6 @@ begin
 
 end;
 
-procedure TphpMOD._ExeModFunctions8Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-var
-  m: TMemoryStream;
-begin
-  m := TMemoryStream(ToObj(Parameters, 1));
-  ExeM.ExtractToStream(Parameters[0].VValue, m);
-end;
-
-procedure TphpMOD._ExeModFunctions9Execute(Sender: TObject;
-  Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
-  TSRMLS_DC: Pointer);
-var
-  m: TMemoryStream;
-begin
-  m := TMemoryStream(ToObj(Parameters, 1));
-  ExeM.AddFromStream(Parameters[0].VValue, m);
-end;
 
 procedure TphpMOD._TPictureLibFunctions19Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
