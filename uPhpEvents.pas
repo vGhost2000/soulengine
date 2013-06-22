@@ -1,4 +1,4 @@
-unit uPhpEvents;
+п»їunit uPhpEvents;
 
 {$I 'sDef.inc'}
 
@@ -1925,7 +1925,7 @@ begin
   Result := True;
 
   H := EventRun(Sender, 'OnBeforeMenu', [menuInfo.x, menuInfo.y,
-    // CefStringClearAndGet вот в ней херня.!!!
+    // CefStringClearAndGet РІРѕС‚ РІ РЅРµР№ С…РµСЂРЅСЏ.!!!
     CefString(@menuInfo.linkUrl), CefString(@menuInfo.imageUrl),
     CefString(@menuInfo.pageUrl), CefString(@menuInfo.frameUrl),
     CefString(@menuInfo.selectionText), Result], False);
