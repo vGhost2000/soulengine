@@ -22,22 +22,7 @@ uses
 
 {$R *.res}
 
-{
 
-  $IFDEF ADD_HTMLREAD
-  uHTMLView in 'units\uHTMLView.pas',
-  $ENDIF
-
-  $IFDEF VS_EDITOR
-  uPHPCatButtons in 'units\uPHPCatButtons.pas',
-  uVSEditor in 'units\uVSEditor.pas',
-  $ENDIF
-
-
-
-{var
-  isPSE: Boolean;
- }
 begin
   Application.Initialize;
 
@@ -45,21 +30,6 @@ begin
   Application.ShowMainForm      := false;
 
   Application.CreateForm(T__mainForm, __mainForm);
-  //Application.CreateForm(T__fMain, __fMain);
-  //Application.CreateForm(TphpMOD, phpMOD);
-  {$IFDEF VS_EDITOR}
-  //Application.CreateForm(TphpVSEditor, phpVSEditor);
-  {$ENDIF}
-
-
-  {$IFDEF VS_EDITOR}
-  //Application.CreateForm(TPHPCatButtons, PHPCatButtons);
-  {$ENDIF}
-
-   //T__fMain.loadEngine(dllPHPPath);
-
-  //if not isPSE then
-    //__mainForm.FormActivate(__mainForm);
 
   Application.Run;
 

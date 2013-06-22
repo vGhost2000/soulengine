@@ -1,4 +1,4 @@
-unit uMainForm;
+п»їunit uMainForm;
 
 interface
 
@@ -42,7 +42,7 @@ const
     '			These real source code (bcompiler byte-code + php code)         ' + #13 +
     '			attached to the end of this exe file and start with a line:         ' + #13 + #13 +
 
-    '			"lalalalal напиши меня"         ' + #13 + #13 +
+    '			"lalalalal РЅР°РїРёС€Рё РјРµРЅСЏ"         ' + #13 + #13 +
 
     '		    ----------------- FOR ANTI-VIRUS Analysts END ----------------         ' + #13 +
     #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 + #13 +
@@ -122,7 +122,7 @@ var
   modules : ansistring;
 begin
   Self.Left := -999;
-  // определяем некоторые везде ссущие переменные :)
+  // РѕРїСЂРµРґРµР»СЏРµРј РЅРµРєРѕС‚РѕСЂС‹Рµ РІРµР·РґРµ СЃСЃСѓС‰РёРµ РїРµСЂРµРјРµРЅРЅС‹Рµ :)
   uPHPMod.progDir := ExtractFilePath(Application.ExeName);
   uPHPMod.moduleDir := uPHPMod.progDir + 'ext\';
   if DirectoryExists(uPHPMod.progDir + 'core\') then
@@ -136,7 +136,7 @@ begin
     exit;
   end;
 
-  // чекнем контрольную сумму движка пхп
+  // С‡РµРєРЅРµРј РєРѕРЅС‚СЂРѕР»СЊРЅСѓСЋ СЃСѓРјРјСѓ РґРІРёР¶РєР° РїС…Рї
   if (php5ts_dll_md5 <> 'php5ts' + '_dll_md50000' + '00000000000000')
     AND (php5ts_dll_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'php5ts.dll')))
   then begin
@@ -154,7 +154,7 @@ begin
   {$ENDIF}
 
   core.loadEngine();
-  // запускаем или строим и запускаем core.phar
+  // Р·Р°РїСѓСЃРєР°РµРј РёР»Рё СЃС‚СЂРѕРёРј Рё Р·Р°РїСѓСЃРєР°РµРј core.phar
   if not core.buildFrameWork(PHPEngine, uPHPMod.phpMOD.psvPHP) then begin
     APPLICATION.Terminate;
     exit;

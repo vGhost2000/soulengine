@@ -1,4 +1,4 @@
-unit core;
+п»їunit core;
 
 {$ifdef fpc}
 {$mode objfpc}{$H+}
@@ -63,7 +63,7 @@ end;
 
 procedure loadEngine();
 begin
-  // инициализируем пхп
+  // РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РїС…Рї
   if (ParamStr(2) = '-errors') then
   begin
     PHPEngine.HandleErrors := True;
@@ -108,7 +108,7 @@ begin
     exit;
   end;
 
-  // чекнем контрольную сумму архива с core скриптами
+  // С‡РµРєРЅРµРј РєРѕРЅС‚СЂРѕР»СЊРЅСѓСЋ СЃСѓРјРјСѓ Р°СЂС…РёРІР° СЃ core СЃРєСЂРёРїС‚Р°РјРё
   if (core_phar_md5 <> 'core_' + 'phar_md5' + '0000000000000000000')
     AND (core_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'core.phar')))
   then begin
@@ -122,7 +122,7 @@ begin
   );
 
   if FileExists(uPHPMod.progDir + 'modules.phar') then begin
-    // чекнем контрольную сумму архива со скриптами дополнительных модулей прокта
+    // С‡РµРєРЅРµРј РєРѕРЅС‚СЂРѕР»СЊРЅСѓСЋ СЃСѓРјРјСѓ Р°СЂС…РёРІР° СЃРѕ СЃРєСЂРёРїС‚Р°РјРё РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… РјРѕРґСѓР»РµР№ РїСЂРѕРєС‚Р°
     if (modules_phar_md5 <> 'modules' + '_phar_' + 'md50000000000000000')
       AND (modules_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'modules.phar')))
     then begin
@@ -135,7 +135,7 @@ begin
   end;
 
   if FileExists(uPHPMod.progDir + 'main_program.phar') then begin
-    // чекнем контрольную сумму архива со скриптами пользовательской программы
+    // С‡РµРєРЅРµРј РєРѕРЅС‚СЂРѕР»СЊРЅСѓСЋ СЃСѓРјРјСѓ Р°СЂС…РёРІР° СЃРѕ СЃРєСЂРёРїС‚Р°РјРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРѕР№ РїСЂРѕРіСЂР°РјРјС‹
     if (main_program_phar_md5 <> 'main_' + 'program_phar' + '_md500000000000')
       AND (main_program_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'main_program.phar')))
     then begin

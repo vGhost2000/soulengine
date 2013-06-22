@@ -8,7 +8,7 @@ interface
 
 uses
   Classes, SysUtils, Dialogs, Controls, Forms, ShellAPI, ClipBrd, Windows, ShlObj,
-  Graphics, Vcl.Imaging.GIFImg, Jpeg, PNGImage, exemod,
+  Graphics, Vcl.Imaging.GIFImg, Jpeg, PNGImage, uPHPMod,
                               //GifImage
   {$ifdef fpc}
   LCLType,
