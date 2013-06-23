@@ -24,6 +24,12 @@ var
   myPHPEngine: TPHPEngine;
   mypsvPHP: TpsvPHP;
 
+const
+  program_type:   ansistring = 'THIS_IS_IDE_TYPE_Hk8Geb3_3He0000';
+  // а то оптимизатор, СЦУКО!, конкатенирующиеся inline константы склеивает в одну
+  four_zero_str:  ansistring = '0000';
+
+
 function getPsvPHP(): TpsvPHP;
 procedure core_Init(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil);
 function buildFrameWork(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil): boolean;
@@ -104,6 +110,12 @@ begin
   result := false;
 
   if not FileExists(uPHPMod.progDir + 'core.phar') then begin
+    // Если файл core.phar не существует и пристутствует нормальная сигнатура (не IDE) то ошибка
+    if program_type <> 'THIS_IS_IDE_TYPE_Hk8Geb3_3He' + four_zero_str then begin
+      MessageBox(0, 'The program is corrupted, try reinstalling it.', 'Fatal error', mb_Ok or MB_ICONERROR);
+      exit;
+    end;
+
     if not FileExists(uPHPMod.engineDir + 'coreBuilder.php') then begin
       MessageBox(0, 'Core archive builder script not found.', 'Fatal error', mb_Ok or MB_ICONERROR);
       exit;
@@ -119,15 +131,17 @@ begin
   end;
 
   {$IFNDEF NO_DEBUG}
-    uPHPMod.phpMOD.RunCode('<?php if (!class_exists("CoreBuilder")) {' +
-      'require_once("phar://core.phar/coreBuilder.php");} ' +
-      'CoreBuilder::buildFrameWork(true); ?>'
-    );
+    if program_type = 'THIS_IS_IDE_TYPE_Hk8Geb3_3He' + four_zero_str then begin
+      uPHPMod.phpMOD.RunCode('<?php if (!class_exists("CoreBuilder")) {' +
+        'require_once("phar://core.phar/coreBuilder.php");} ' +
+        'CoreBuilder::buildFrameWork(true); ?>'
+      );
+    end;
   {$ENDIF}
 
 
   // чекнем контрольную сумму архива с core скриптами
-  if (core_phar_md5 <> 'core_' + 'phar_md5' + '0000000000000000000')
+  if (core_phar_md5 <> 'core_phar_md5000000000000000' + four_zero_str)
     AND (core_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'core.phar')))
   then begin
     {$IFDEF SHOW_DEBUG_MESSAGES}
@@ -135,13 +149,14 @@ begin
     {$ENDIF}
     exit;
   end;
+
   uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "core.phar", "core.phar");' +
     ' require_once("phar://core.phar/include.php"); ?>'
   );
 
   if FileExists(uPHPMod.progDir + 'modules.phar') then begin
     // чекнем контрольную сумму архива со скриптами дополнительных модулей прокта
-    if (modules_phar_md5 <> 'modules' + '_phar_' + 'md50000000000000000')
+    if (modules_phar_md5 <> 'modules_phar_md5000000000000' + four_zero_str)
       AND (modules_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'modules.phar')))
     then begin
       {$IFDEF SHOW_DEBUG_MESSAGES}
@@ -152,9 +167,12 @@ begin
     uPHPMod.phpMOD.RunCode('<?php require_once("phar://" . $GLOBALS["progDir"] . "modules.phar/include.php"); ?>');
   end;
 
-  if FileExists(uPHPMod.progDir + 'main_program.phar') then begin
+  if FileExists(uPHPMod.progDir + 'main_program.phar') AND
+    // выполняем файл программы только если пристутствует подпись
+    (program_type <> 'THIS_IS_IDE_TYPE_Hk8Geb3_3He' + four_zero_str)
+  then begin
     // чекнем контрольную сумму архива со скриптами пользовательской программы
-    if (main_program_phar_md5 <> 'main_' + 'program_phar' + '_md500000000000')
+    if (main_program_phar_md5 <> 'main_program_phar_md50000000' + four_zero_str)
       AND (main_program_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'main_program.phar')))
     then begin
       {$IFDEF SHOW_DEBUG_MESSAGES}
@@ -167,6 +185,12 @@ begin
     exit;
   end else if not FileExists(uPHPMod.progDir + 'system.phar') then
     uPHPMod.phpMOD.RunCode('<?php CoreBuilder::buildSystemIDE(); ?>');
+
+  // если присутствует подпись нормальной программы то это не IDE, тут что то не так, выдаём ошибку
+  if program_type <> 'THIS_IS_IDE_TYPE_Hk8Geb3_3He' + four_zero_str then begin
+    MessageBox(0, 'The program is corrupted, try reinstalling it.', 'Fatal error', mb_Ok or MB_ICONERROR);
+    exit;
+  end;
 
   if not FileExists(uPHPMod.progDir + 'system.phar') then begin
     MessageBox(0, 'SystemIDE archive builder script failed build archive.', 'Fatal error', mb_Ok or MB_ICONERROR);

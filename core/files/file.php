@@ -243,16 +243,21 @@ function file_p_contents($file, $data){
     return file_put_contents($file, $data);    
 }
 
-function x_copy($from, $to){
-    
-    $from = replaceSl($from);
-    $to   = replaceSl($to);
-    $dir  = dirname($to);
-    
-    if (!file_exists($dir))
-        mkdir($dir, 0777, true);
-        
-    return copy($from, $to);
+function x_copy($from, $to, $skip = false)
+{
+	$to = replaceSl($to);
+	if ($skip && is_file($to)) {
+		return true;
+	}
+
+	$from = replaceSl($from);
+	$dir  = dirname($to);
+
+	if (!is_dir($dir)) {
+		mkdir($dir, 0777, true);
+	}
+
+	return copy($from, $to);
 }
 
 function x_move($from, $to){

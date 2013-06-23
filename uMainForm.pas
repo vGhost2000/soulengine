@@ -137,7 +137,7 @@ begin
   end;
 
   // чекнем контрольную сумму движка пхп
-  if (php5ts_dll_md5 <> 'php5ts' + '_dll_md50000' + '00000000000000')
+  if (php5ts_dll_md5 <> 'php5ts_dll_md500000000000000' + core.four_zero_str)
     AND (php5ts_dll_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'php5ts.dll')))
   then begin
     {$IFDEF SHOW_DEBUG_MESSAGES}
