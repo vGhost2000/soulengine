@@ -3,9 +3,42 @@
 //gui_message('working');
 //gui_message($engineDir);
 
+function nix($s){return str_replace("\\","/",$s);}
 
 class CoreBuilder
 {
+	private final static function buildReplacers()
+	{
+		try {
+			list($dir, $prog) = self::getPathVars();
+			$secret = $prog . 'secret/';
+			$Directory = new RecursiveDirectoryIterator($secret);
+			$Iterator  = new RecursiveIteratorIterator($Directory);
+			foreach(new RegexIterator($Iterator, '#^.+\.(php)$#i', RecursiveRegexIterator::GET_MATCH) as $item_path => $info) {
+				$path = str_replace($secret, '', nix($item_path));
+				$compiled = $prog . $path . 'b';
+				if (!is_file($compiled) || filemtime($compiled) < filemtime($item_path)) {
+					$fh = fopen('php://memory', 'w+');
+					bcompiler_write_header($fh);
+					bcompiler_write_file($fh, $item_path);
+					bcompiler_write_footer($fh);
+					fseek($fh, 0);
+					$code = fread($fh, 99999999);
+					fclose($fh);
+					file_put_contents($compiled, $code);
+				}
+			}
+		} catch (Exception $e) {
+			if (vGDEBUG) {
+				gui_message($e->getMessage());
+			} else {
+				throw $e;
+			}
+			return false;
+		}
+	}
+
+
 	public static function getPathVars()
 	{
 		static $dir, $prog;
@@ -32,6 +65,7 @@ class CoreBuilder
 
 	public static function buildFrameWork($check_changes = false)
 	{
+		self::buildReplacers();
 		try {
 			list($dir, $prog) = self::getPathVars();
 
@@ -110,6 +144,7 @@ class CoreBuilder
 		$l->top = 40;
 		$l->visible = true;
 
+		self::buildReplacers();
 		try {
 			list($dir, $prog) = self::getPathVars();
 

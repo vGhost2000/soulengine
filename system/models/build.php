@@ -156,7 +156,7 @@ class CodeBuilder
 
 	public static function compileByteFile($file)
 	{
-		unset($code);
+		//unset($code);
 		$fh = fopen('php://memory', 'w+');
 		bcompiler_write_header($fh);
 		bcompiler_write_file($fh, $tmp);
