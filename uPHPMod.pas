@@ -1154,6 +1154,9 @@ type
     procedure PHPEngineLogMessage(Sender: TObject; AText: AnsiString);
     procedure checkCodeForErrors(Sender: TObject; Parameters: TFunctionParams;
       var ReturnValue: Variant; ZendVar: TZendVariable; TSRMLS_DC: Pointer);
+    procedure OuterRequire(Sender: TObject;
+      Parameters: TFunctionParams; var ReturnValue: Variant;
+      ZendVar: TZendVariable; TSRMLS_DC: Pointer);
   private
     { Private declarations }
   public
@@ -2512,7 +2515,7 @@ begin
   end;
 
   {$IFNDEF NO_DEBUG}
-    showmessage('PHPEngineScriptError '+AText);
+    showmessage('PHPEngineScriptError ' + AText + ' ' + AFileName + ' line: ' + intToStr(ALineNo));
   {$ENDIF}
 
   if fatal_handler_php <> '' then begin
@@ -2669,6 +2672,13 @@ begin
   end;
 
   ReturnValue := PI^.PropType^.Kind <> tkClass;
+end;
+
+procedure TphpMOD.OuterRequire(Sender: TObject;
+  Parameters: TFunctionParams; var ReturnValue: Variant; ZendVar: TZendVariable;
+  TSRMLS_DC: Pointer);
+begin
+  phpMOD.RunCode('<?php require_once("' + Parameters[0].AsStr + '"); ?>');
 end;
 
 procedure TphpMOD.PHPLibraryFunctions7Execute(Sender: TObject;

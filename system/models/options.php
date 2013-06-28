@@ -77,7 +77,7 @@ class myOptions {
         $list = c('fmPHPModules->list');
         $list->clear();
         
-        $modules = findFiles(SYSTEM_DIR . '/../ext/','dll');
+        $modules = findFilesV2(DOC_ROOT . 'ext/', 'dll');
         //unset($modules[array_search('php_bcompiler.dll',$modules)]);
         
         $list->items->setArray($modules);
@@ -111,7 +111,7 @@ class myOptions {
         $list = c('fmProjectOptions->list');
         $list->clear();
         
-        $modules = findFiles(SYSTEM_DIR . '/../ext/','dll');
+        $modules = findFilesV2(DOC_ROOT . 'ext/', 'dll');
         //unset($modules[array_search('php_bcompiler.dll',$modules)]);
         
         $list->items->setArray($modules);
@@ -328,7 +328,7 @@ class myOptions {
 			myOptions::set('backup','active', c('fmOptions->backup_active')->checked);
 			
 			$dir = c('fmOptions->backup_dir')->text;
-			if ( !eregi('$([.\-\_a-zà-ÿÀ-ß0-9]+)') )
+			if ( !eregi('$([.\-\_a-zĞ°-ÑĞ-Ğ¯0-9]+)') )
 				$dir = 'backup';
 				
 			myOptions::set('backup','dir', $dir);
@@ -359,12 +359,13 @@ class myBackup {
 	static $dir;
 	static $count;
 	
-	function doInterval(){
+	function doInterval()
+	{
 		
 		global $projectFile;
 
-		/* ---- ÂÎÒ ×ÒÎ İÒÎ, ÁËßÒÜ, ÒÀÊÎÅ?! ------
-		if ( !eregi('$([.\-\_a-zà-ÿÀ-ß0-9]+)') )
+		/* ---- Ğ’ĞĞ¢ Ğ§Ğ¢Ğ Ğ­Ğ¢Ğ, Ğ‘Ğ›Ğ¯Ğ¢Ğ¬, Ğ¢ĞĞšĞĞ•?! ------
+		if ( !eregi('$([.\-\_a-zĞ°-ÑĞ-Ğ¯0-9]+)') )
 			self::$dir = 'backup';
 		*/
 		self::$dir = 'backup';
@@ -379,7 +380,7 @@ class myBackup {
 		while ( is_file( $dir . $file . $from . '.dvs' ) ) $from++;   */
 		
 		$src = $dir . $file . $from . '.dvs';
-		myCompile::setStatus('Backup', t('Ñîçäàíèå ğåçåğâíîé êîïèè - ').'"'.self::$dir.'/'. $file . $from . '.dvs"');
+		myCompile::setStatus('Backup', t('Ğ¡Ğ¾Ğ·Ğ´Ğ°Ğ½Ğ¸Ğµ Ñ€ĞµĞ·ĞµÑ€Ğ²Ğ½Ğ¾Ğ¹ ĞºĞ¾Ğ¿Ğ¸Ğ¸ - ').'"'.self::$dir.'/'. $file . $from . '.dvs"');
 		myProject::saveAsDVS($src);
 		
 		$check = $dir . $file .($from - self::$count - 1) . '.dvs';

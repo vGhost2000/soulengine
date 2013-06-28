@@ -42,80 +42,145 @@ class DS_Build {
 
 }
 
-class DS_BuildSoulEngine {
+class CodeBuilder
+{
+	private $form = '';
+	private $code = '';
+	private $objects;
+	private $events = array();
 
-	public $modules;
-	public $core;
-	public $core_dir;
-	
-	public function __construct( $core_dir ){
-		
-		$this->core_dir = $core_dir;
-		$file = file_get_contents( $core_dir . '/include.php' );
-		
-		$data = explode('/* %START_MODULES% */', $file);
-		$this->parseModules( $data[1] );
-		$this->core = $data[0];
-	}
-	
-	public function parseModules($data){
-		
-		$lines = explode(chr(13), $data);
-		$lines = array_map('trim', $lines);
-		
-		foreach($lines as $line){
-			
-			if ( strpos($line, 'include_lib(\'') === 0 ){
-				
-				$line = str_ireplace(array('include_lib(\'', "');"), '', $line);
-				$tmp = array_map('trim', explode("','", $line));
-				
-				$this->modules[] = $tmp;
+	public function __construct($cform)
+	{
+		$this->form = $cform;
+		$this->code = '<' . "?php\n CLASS TForm" . $cform . " EXTENDS vGObjectForm\n{\n";
+		$this->code .= 'static $SelfObj = False;' . "\n";
+		$this->code .= '
+			Protected	$___MustBeObj	= Array(
+									"SCR"				=> Array("SCREEN"),
+									"APP"				=> Array("APPLICATION"),
+									"SCREEN"			=> Array("SCREEN"),
+									"APPLICATION"		=> Array("APPLICATION"),
+			);
+
+			Public Function __construct($Name)
+			{
+				parent::__construct($Name);
+				self::$SelfObj = $this;
+				/* <OnCreateFormCode ---JhdYndkldfKkfkjkjk000dL3243ms;d-> */
+			}
+		';
+
+		$this->objects = array();
+		$objects       = myProject::getFormsObjects();
+		foreach ($objects as $form => $data) {
+			if (strtolower($form) == $this->form) {
+				foreach ($data as $info) {
+					$this->objects[$info['NAME']] = $info['CLASS'];
+				}
+				$this->objects[$this->form] = 'TForm';
+				$this->objects['--fmedit'] = 'TForm';
+				break;
 			}
 		}
 	}
-	
-	public function SaveToFile( $file = false ){
-		/*
-		if ( file_exists($file) )
-		*/
-		$str = $this->core;
-		
-		foreach( $this->modules as $module ){
-				
-			$x_file = $this->core_dir . '/' . $module[0] . '/' . $module[1] . '.php';
-			$code = trim( file_get_contents( $x_file ) );
-			if ( strpos($code, '<?') === 0 )
-				$code = substr($code, 2);
-			
-			if ( substr($code,-2) === '?>' )
-				$code = substr($code, 0, -2);
-				
-			$str .= ';' . $code;
+
+
+	public function addEvent($component, $action, $code)
+	{
+		if ($component == '--fmedit') {
+			$component = $this->form;
 		}
-		
-		/*****/
-		if ( strpos($str, '<?') === 0 )
-			$str = substr($str, 2);
-			
-		if ( substr($code, -2) === '?>' )
-			$str = substr($str, 0, -2);
-		/*****/
-			
-		
-		$str = gzcompress( php_strip_whitespace_ex($str) );
-		if (!$file)
-			return $str;
-			
-		if ( !file_exists($file) )
-			file_put_contents($file, $str);
-		else {
-			$md5 = md5($str);
-	
-			if ( md5_file($file) !== $md5 )
-				file_put_contents($file, $str);
+
+		if (empty($this->objects)) {
+			throw new Exception(t('CodeBuilder не обнаружил компонентов для формы ') . $this->form . t(' но был вызван метод добавления события'));
 		}
-		
-		return $str;
+		if (empty($this->objects[$component])) {
+			throw new Exception(t('CodeBuilder не обнаружил компонента ') . $component . t(' но был вызван метод добавления события ему'));
+		}
+
+		if ($component == $this->form && $action == 'oncreate') {
+			$this->code = str_replace('/* <OnCreateFormCode ---JhdYndkldfKkfkjkjk000dL3243ms;d-> */', $code, $this->code);
+			return true;
+		}
+
+		if (empty($this->events[$action])) {
+			$this->events[$action] = array();
+		}
+		$this->events[$action][] = $component;
+
+		$S = $R = array();
+		if (preg_match_all('#[^\w]c\s*\(\s*(?:\'|"|\$)([a-z0-9_>-]+)(?:\'|"|)\s*\)#si', ' ' . $code, $m)) {
+			foreach ($m[0] as $key => $search) {
+				$pattern = $m[1][$key];
+				$cpos = strpos($pattern, '->');
+				if ($cpos) {
+					$pattern = '$GLOBALS[\'' . strtolower(substr($pattern, 0, $cpos)) . '\']' . substr($pattern, $cpos);
+				} else {
+					$pattern = '$this->' . $pattern;
+				}
+				if ($search[0] != 'c' && $search[0] != 'C') {
+					$pattern = $search[0] . $pattern;
+				}
+				$S[] = $search;
+				$R[] = $pattern;
+			}
+			$code = str_replace($S, $R, $code);
+		}
+
+		$this->code .= '
+			Public Function ' . $action . $component . '(' . DSApi::getEventParams($action, $this->objects[$component]) . ')
+			{
+				global $APPLICATION, $SCREEN, $_c, $progDir, $_PARAMS, $argv;
+				' . $code . '
+			}
+		';
+		return true;
+	}
+
+
+	public function getEncodedClassCode()
+	{
+		return self::compileByteCode($this->getClassCode());
+	}
+
+
+	public static function compileByteCode($code)
+	{
+		$tmp = TEMP_DIR . 'ds3_proj_' . rand(1,999999) . microtime(1) . md5($code) . '.php';
+		file_put_contents($tmp, $code);
+		$code = self::compileByteFile($tmp);
+		unlink($tmp);
+		return $code;
+	}
+
+
+	public static function compileByteFile($file)
+	{
+		unset($code);
+		$fh = fopen('php://memory', 'w+');
+		bcompiler_write_header($fh);
+		bcompiler_write_file($fh, $tmp);
+		bcompiler_write_footer($fh);
+		fseek($fh, 0);
+		$code = fread($fh, 99999999);
+		fclose($fh);
+
+		return $code;
+	}
+
+
+	public function getClassCode()
+	{
+		$this->code .= 'protected $___Events = array(';
+		foreach ($this->events as $event => $components) {
+			$this->code .= "array('" . implode("', '", $components) . "'),\n";
+		}
+		$this->code .= ");\n}\n";
+
+		if (vGDEBUG) {
+			global $projectFile;
+			file_put_contents(dirname($projectFile) . '/' . $this->form . '-' . md5($this->code) . '.php');
+		}
+		return $this->code;
 	}
 }

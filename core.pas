@@ -33,7 +33,7 @@ const
 function getPsvPHP(): TpsvPHP;
 procedure core_Init(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil);
 function buildFrameWork(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil): boolean;
-procedure loadEngine();
+function loadEngine(): boolean;
 
 
 implementation
@@ -71,8 +71,11 @@ begin
 end;
 
 
-procedure loadEngine();
+function loadEngine(): boolean;
+const
+  php_ini_md5:          ansistring = 'php_ini_md5000000000000000000000';
 begin
+  result := false;
   // инициализируем пхп
   if (ParamStr(2) = '-errors') then
   begin
@@ -88,6 +91,24 @@ begin
   PHPEngine.DLLFolder := uPHPMod.progDir;
   PHPEngine.IniPath   := uPHPMod.getIniLocation(uPHPMod.progDir);
 
+  if (
+      // если это IDE и есть md5 от php.ini - ошибка
+      (php_ini_md5 <> 'php_ini_md500000000000000000' + four_zero_str) AND
+      (program_type = 'THIS_IS_IDE_TYPE_Hk8Geb3_3He' + four_zero_str)
+    ) OR (
+      // если это НЕ IDE и нету md5 от php.ini - ошибка
+      (php_ini_md5 = 'php_ini_md500000000000000000' + four_zero_str) AND
+      (program_type <> 'THIS_IS_IDE_TYPE_Hk8Geb3_3He' + four_zero_str)
+    ) OR (
+      // если это есть md5 от php.ini и оно не совпадает - ошибка
+      (php_ini_md5 <> 'php_ini_md500000000000000000' + four_zero_str) AND
+      (php_ini_md5 <> LowerCase(xMD5_File(PHPEngine.IniPath)))
+    )
+  then begin
+    MessageBox(0, 'The program is corrupted, try reinstalling it.', 'Fatal error', mb_Ok or MB_ICONERROR);
+    exit;
+  end;
+
   core_Init(PHPEngine, uPHPMod.phpMOD.psvPHP);
   addVar('progDir',   uPHPMod.progDir);
   addVar('moduleDir', uPHPMod.moduleDir);
@@ -98,6 +119,7 @@ begin
   {$ELSE}
     uPHPMod.phpMOD.RunCode('<?php define("vGDEBUG", true); ?>');
   {$ENDIF}
+  result := true;
 end;
 
 
@@ -149,11 +171,11 @@ begin
     {$ENDIF}
     exit;
   end;
-
+showmessage('start core');
   uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "core.phar", "core.phar");' +
     ' require_once("phar://core.phar/include.php"); ?>'
   );
-
+showmessage('started core');
   if FileExists(uPHPMod.progDir + 'modules.phar') then begin
     // чекнем контрольную сумму архива со скриптами дополнительных модулей прокта
     if (modules_phar_md5 <> 'modules_phar_md5000000000000' + four_zero_str)
@@ -180,7 +202,10 @@ begin
       {$ENDIF}
       exit;
     end;
-    uPHPMod.phpMOD.RunCode('<?php require_once("phar://" . $GLOBALS["progDir"] . "main_program.phar/include.php"); ?>');
+    showmessage('start prog');
+    uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "main_program.phar", "main_program.phar");' +
+      'require_once("phar://main_program.phar/include.php"); ?>'
+    );
     result := true;
     exit;
   end else if not FileExists(uPHPMod.progDir + 'system.phar') then

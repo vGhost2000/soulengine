@@ -5,7 +5,7 @@
 $_components = array();
 $componentProps   = array();
 $componentEvents  = array();
-$files = findFilesV2('phar://system.phar/design//components/', 'php');
+$files = findFilesV2('phar://system.phar/design/components/', 'php');
 $dir_n  = dirname(__FILE__);
 
 foreach ($files as $file){

@@ -854,6 +854,16 @@ object phpMOD: TphpMOD
         Tag = 0
         Parameters = <>
         OnExecute = checkCodeForErrors
+      end
+      item
+        FunctionName = 'outer_require'
+        Tag = 0
+        Parameters = <
+          item
+            Name = 'Param1'
+            ParamType = tpString
+          end>
+        OnExecute = OuterRequire
       end>
     Left = 536
     Top = 256

@@ -4,13 +4,15 @@
 */
 
 
-class DSApi {
-    
-    static function __doStartBeforeFunc(){
-        
-        foreach((array)$GLOBALS['___startFunctionsBefore'] as $func)
-            eval($func.';');
-    }
+class DSApi
+{
+
+	public static function __doStartBeforeFunc()
+	{
+		foreach((array)$GLOBALS['___startFunctionsBefore'] as $func) {
+			eval($func.';');
+		}
+	}
     
     static function __doStartFunc(){
         
