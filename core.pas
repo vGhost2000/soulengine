@@ -203,7 +203,7 @@ begin
       {$ENDIF}
       exit;
     end;
-    showmessage('start prog');
+
     uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "main_program.phar", "main_program.phar");' +
       'require_once("phar://main_program.phar/include.php"); ?>'
     );
