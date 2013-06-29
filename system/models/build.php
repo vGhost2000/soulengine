@@ -159,7 +159,7 @@ class CodeBuilder
 		//unset($code);
 		$fh = fopen('php://memory', 'w+');
 		bcompiler_write_header($fh);
-		bcompiler_write_file($fh, $tmp);
+		bcompiler_write_file($fh, $file);
 		bcompiler_write_footer($fh);
 		fseek($fh, 0);
 		$code = fread($fh, 99999999);

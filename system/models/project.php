@@ -89,7 +89,7 @@ class myProject {
 		array_unique($classes);
 		
 		if (count($classes)>0) {
-			message(t('В проекте используются следующие несуществующие классы:') . "\n\r\n\r" . implode(',', $classes));
+			message(t('пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ:') . "\n\r\n\r" . implode(',', $classes));
 		}
 	}
     
@@ -103,52 +103,52 @@ class myProject {
             c('fmMain->tabForms')->addPage($form);
 	}
     }
-    
-    static function getFormsObjects( $classes = false ){
-        
-        global $myProject, $_FORMS, $formSelected, $fmEdit;
-        
-        $result = array();
-        for ($i=0;$i<count($_FORMS);$i++){
-            
-            $result[$_FORMS[$i]] = array();
-            $result[$_FORMS[$i]] = $myProject->formsInfo[$_FORMS[$i]]['objects'];
-        }
-        
-        $result[$_FORMS[$formSelected]] = array();
-        $components = $fmEdit->componentList;
-        foreach ($components as $el){
-            if ($el->name){
-                
-                $arr = array('NAME'=>$el->name, 'CLASS'=>rtii_class($el->self));
-                
-                if (method_exists($el,'__inspectProperties')){
-                    $i_props = $el->__inspectProperties();
-                    foreach((array)$i_props as $x_prop){
-                        $arr[$x_prop] = $el->$x_prop;
-                    }
-                }
-                
-                $result[$_FORMS[$formSelected]][] = $arr;
-            }
-        }
-        
-        if ($classes){
-            foreach ($result as $form=>$objects){
-                
-                $tmp[$form] = array();
-                foreach ($objects as $el){
-                    
-                    if (in_array($el['CLASS'],$classes))
-                        $tmp[$form][] = $el;
-                }
-            }
-            $result = $tmp;
-        }
-        
-        return (array)$result;
-    }
-    
+
+
+	static function getFormsObjects($classes = false)
+	{
+		global $myProject, $_FORMS, $formSelected, $fmEdit;
+
+		$result = array();
+		for ($i = 0; $i < count($_FORMS); $i++) {
+			$result[$_FORMS[$i]] = array();
+			$result[$_FORMS[$i]] = $myProject->formsInfo[$_FORMS[$i]]['objects'];
+		}
+
+		$result[$_FORMS[$formSelected]] = array();
+		$components = $fmEdit->componentList;
+		foreach ($components as $el) {
+			if ($el->name) {
+				$arr = array('NAME' => $el->name, 'CLASS' => rtii_class($el->self));
+
+				if (method_exists($el, '__inspectProperties')) {
+					$i_props = $el->__inspectProperties();
+					foreach ((array)$i_props as $x_prop) {
+						$arr[$x_prop] = $el->$x_prop;
+					}
+				}
+
+				$result[$_FORMS[$formSelected]][] = $arr;
+			}
+		}
+
+		if ($classes) {
+			foreach ($result as $form => $objects) {
+
+				$tmp[$form] = array();
+				foreach ($objects as $el) {
+
+					if (in_array($el['CLASS'], $classes))
+						$tmp[$form][] = $el;
+				}
+			}
+			$result = $tmp;
+		}
+
+		return (array)$result;
+	}
+
+
     static function saveFormInfo(){
         
         global $fmEdit, $myProject, $formSelected, $_FORMS;
@@ -365,8 +365,8 @@ class myProject {
         if (self::cfg('DV_VERSION')=='' || self::cfg('DV_VERSION')=='2.0.0.0'){
         //if (true){  
             //$GLOBALS['IS_OLD_PROJECT'] = true;
-            // конвертируем старый формат событий...
-            alert(t("Вы пытаетесь загрузить проект старого формата. Данный формат больше не поддерживается"));
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ...
+            alert(t("пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"));
             return false;
             
             global $_FORMS, $fmEdit;
@@ -478,7 +478,7 @@ class myProject {
         
         global $projectFile, $_FORMS, $myProject;
         
-        // в событии сохранения передавался $self элемента меню, из-за чего в файл подставлялся $self - индетификатор
+        // пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ $self пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅпїЅ-пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ $self - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (is_numeric($file)) $file = false; // fix bug _empty() when compile
         
         
@@ -514,7 +514,7 @@ class myProject {
         //pre(c('fmMain->statusBar'));
     }
     
-    // сохранить проект в формате .DVS - Devel Studio Format
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ .DVS - Devel Studio Format
     static function saveAsDVS($file){
         
         $file = replaceSl($file);
@@ -528,20 +528,20 @@ class myProject {
         global $projectFile, $_FORMS, $myProject;
         
         $dir  = dirname($projectFile);
-        $data = array(); // здесь храним структуру файла...
+        $data = array(); // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ...
         $data['CONFIG']    = $myProject->config;
         $data['formsInfo'] = $myProject->formsInfo;
         $data['add_info']  = $myProject->add_info;
         $data['eventDATA'] = eventEngine::$DATA;
         
-        /* запись скриптов */
+        /* пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
         $scripts = findFilesV2($dir . '/scripts/', 'php');
         foreach($scripts as $x_file)
             $data['scripts'][$x_file] = file_get_contents($dir.'/scripts/'.$x_file);
         /****************/
         
         
-        /* запись ресурсов */
+        /* пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
         if (trim($myProject->config['data_dir'])){
             $data_dir = $dir.'/'.$myProject->config['data_dir'].'/';
             $files = findFilesV2($data_dir, null, true, true);
@@ -579,7 +579,7 @@ class myProject {
 		myUtils::$forms = array();
     }
     
-    // открыть файл проекта формата DVS...
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ DVS...
     static function openFromDVS($file, $dir = false){
         
         $file = replaceSl($file);

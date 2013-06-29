@@ -119,6 +119,7 @@ begin
   {$ELSE}
     uPHPMod.phpMOD.RunCode('<?php define("vGDEBUG", true); ?>');
   {$ENDIF}
+
   result := true;
 end;
 
@@ -171,11 +172,11 @@ begin
     {$ENDIF}
     exit;
   end;
-showmessage('start core');
+
   uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "core.phar", "core.phar");' +
     ' require_once("phar://core.phar/include.php"); ?>'
   );
-showmessage('started core');
+
   if FileExists(uPHPMod.progDir + 'modules.phar') then begin
     // чекнем контрольную сумму архива со скриптами дополнительных модулей прокта
     if (modules_phar_md5 <> 'modules_phar_md5000000000000' + four_zero_str)

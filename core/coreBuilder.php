@@ -36,6 +36,7 @@ class CoreBuilder
 			}
 			return false;
 		}
+		return true;
 	}
 
 
@@ -156,7 +157,7 @@ class CoreBuilder
 			$Directory = new RecursiveDirectoryIterator($prog);
 			$Iterator  = new RecursiveIteratorIterator($Directory);
 			$archive->startBuffering();
-			foreach(new RegexIterator($Iterator, '#^.+\.(php|phb|pse|dfm|inc|db)$#i', RecursiveRegexIterator::GET_MATCH) as $item_path => $info) {
+			foreach(new RegexIterator($Iterator, '#^.+\.(php|phb|pse|dfm|inc|db|phpb)$#i', RecursiveRegexIterator::GET_MATCH) as $item_path => $info) {
 				$item_path = str_replace('\\', '/', $item_path);
 
 				// если это проверка изменений в существующем архиве и дата изменения архива больше даты изменения файла, то файл не менялся, скипаем

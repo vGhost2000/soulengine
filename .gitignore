@@ -44,3 +44,6 @@ secret/system/blanks/loader.php
 secret
 secret
 secret/system/blanks/loader.php
+dd.php
+tmp
+php_err.log

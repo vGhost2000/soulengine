@@ -1,6 +1,6 @@
 <?
 
-    err_status(false); // отключаем вывод ошибок
+    err_status(false); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         
 
     define('DS_USERDIR',winLocalPath(CSIDL_PERSONAL).'/DevelStudio 3/' );
@@ -29,7 +29,7 @@
         Localization::setLocale($lang);
     }
 
-    if (!EMULATE_DVS_EXE) loader::model('compile.php');
+    if (!EMULATE_DVS_EXE) outer_require('phar://system.phar/models/compile.phpb');
 
     //loader::model('prover');
     loader::modules('modules');
@@ -44,7 +44,7 @@
     
     if (!EMULATE_DVS_EXE){
         
-        loader::model('codegen');
+        outer_require('phar://system.phar/models/codegen.phpb');
         loader::model('syntaxCheck');
         loader::model('design');
         loader::model('copyer');

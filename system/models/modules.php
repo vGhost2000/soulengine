@@ -15,37 +15,33 @@ class myModules
         
         return (array)$GLOBALS['myProject']->config['modules'];
     }
-    
-    static function getPHPModules(){
-        
-        global $projectFile;
+
+
+	static function getPHPModules()
+	{
+		global $projectFile;
 		global $componentClasses;
-        
-        $forms = myProject::getFormsObjects();
-        
-        $result  = array();
-        $classes = array();
-        foreach ($forms as $objs)
-        foreach ($objs as $el){
-            if (!in_array($el['CLASS'],$classes) && file_exists(SYSTEM_DIR.'/design/components/modules/'.$el['CLASS'].'.phpe2')){
-                $result[] = SYSTEM_DIR.'/design/components/modules/'.$el['CLASS'].'.phpe2';
-                $classes[] = $el['CLASS'];
-            } elseif (!in_array($el['CLASS'],$classes) && file_exists(SYSTEM_DIR.'/design/components/modules/'.$el['CLASS'].'.php')){
-               
-                $result[] = SYSTEM_DIR.'/design/components/modules/'.$el['CLASS'].'.php';
-                $classes[] = $el['CLASS'];
-            }  
-        }
-		
-		
-        
-        $files = findFiles( dirname($projectFile).'/scripts/', 'php' );
-        foreach ($files as $file)
-            $result[] = dirname($projectFile).'/scripts/'.$file;
-        
-        return $result;
-    }
-    
+
+		$forms = myProject::getFormsObjects();
+
+		$result = array();
+		$classes = array();
+		foreach ($forms as $objs) {
+			foreach ($objs as $el) {
+				if (!in_array($el['CLASS'], $classes) && file_exists('phar://system.phar/design/components/modules/' . $el['CLASS'] . '.phpe2')) {
+					$result[] = 'phar://system.phar/design/components/modules/' . $el['CLASS'] . '.phpe2';
+					$classes[] = $el['CLASS'];
+				} elseif (!in_array($el['CLASS'], $classes) && file_exists('phar://system.phar/design/components/modules/' . $el['CLASS'] . '.php')) {
+					$result[] = 'phar://system.phar/design/components/modules/' . $el['CLASS'] . '.php';
+					$classes[] = $el['CLASS'];
+				}
+			}
+		}
+
+		return $result;
+	}
+
+
     static function skinExists(){
         
         $forms = myProject::getFormsObjects();
@@ -62,7 +58,7 @@ class myModules
         return false;
     }
     
-    // возвращает список необходимых для подключения модулей...
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ...
     static function getNeed(){
         
         global $myProject, $fmEdit, $_components;
@@ -94,7 +90,7 @@ class myModules
             $myProject->config['modules'][] = $module;
     }
     
-    // attach_dll прикреплять к ехе расширения
+    // attach_dll пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     static function inc($file = false, $attach_dll = false){
         
         global $myProject, $projectFile;
@@ -112,7 +108,7 @@ class myModules
             
              
 
-            // копируем сам модуль, если не скопирован
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             //if (!file_exists(dirname($file).'/ext/'.$mod)){
                 if (!$attach_dll){
                     $md5_1 = $md5_2 = false;
@@ -132,7 +128,7 @@ class myModules
                 }
             //}
             
-            // копируем зависимые dll-ки модуля...
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ dll-пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ...
             foreach ((array)$GLOBALS['MODULES_INFO'][$mod] as $dll){
                 
                     if (is_file($dir . $dll))
@@ -178,7 +174,7 @@ class myModules
     
     
 	/*
-	*	Метод очищает папку проекта от убранных из настроек проекта расширений пхп, а также от зидущих с ними зависимых дополнительных dll'ок
+	*	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ dll'пїЅпїЅ
 	*
 	*	@return void
 	*/
@@ -192,12 +188,12 @@ class myModules
 		$files   = findFilesV2($prj_dir . '/ext/', 'dll');
 
 		foreach ($files as $file){
-			// если файл отсутствует в модулях, удаляем
+			// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 			if (!in_array($file, $modules)){
 
 				unlink($prj_dir . '/ext/' . $file);
 
-				// удаляем зависимые dll-ки
+				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ dll-пїЅпїЅ
 				foreach ((array)$info[$file] as $dll) {
 					if (file_exists($prj_dir . '/' . $dll)) {
 						unlink($prj_dir . '/' . $dll);
@@ -209,8 +205,8 @@ class myModules
 
 
 	/*
-	*	Метод копирует недостающие модули из массива в настройках проекта в папку с проектом. Существующие файлы копироваться не будут
-	*	Кроме самих модулей копируются также зависимые для них dll'ки
+	*	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+	*	пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ dll'пїЅпїЅ
 	*
 	*	@return void
 	*/
@@ -224,13 +220,13 @@ class myModules
 		$prj_dir = dirname($projectFile);
 
 		foreach ($modules as $file){
-			// если файл отсутствует в списке файлов, копировать нечего
+			// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 			if (!in_array($file, $files)){
 				continue;
 			}
 			x_copy(DOC_ROOT . $file, $prj_dir . '/ext/' . $file, true);
 
-			// копируем зависимые dll-ки
+			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ dll-пїЅпїЅ
 			if (!empty($info[$file])) {
 				foreach ((array)$info[$file] as $dll) {
 					x_copy(DOC_ROOT . $dll, $prj_dir . '/' . $dll, true);

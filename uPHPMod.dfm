@@ -864,6 +864,12 @@ object phpMOD: TphpMOD
             ParamType = tpString
           end>
         OnExecute = OuterRequire
+      end
+      item
+        FunctionName = 'break_php'
+        Tag = 0
+        Parameters = <>
+        OnExecute = break_php
       end>
     Left = 536
     Top = 256

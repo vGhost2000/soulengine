@@ -157,6 +157,7 @@ begin
     APPLICATION.Terminate;
     exit;
   end;
+
   // запускаем или строим и запускаем core.phar
   if not core.buildFrameWork(PHPEngine, uPHPMod.phpMOD.psvPHP) then begin
     APPLICATION.Terminate;

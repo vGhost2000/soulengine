@@ -1157,6 +1157,8 @@ type
     procedure OuterRequire(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: Variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
+    procedure break_php(Sender: TObject; Parameters: TFunctionParams;
+      var ReturnValue: Variant; ZendVar: TZendVariable; TSRMLS_DC: Pointer);
   private
     { Private declarations }
   public
@@ -1260,14 +1262,14 @@ end;
 
 function getIniLocation(DLLFolder: string): string;
 begin
-  if FileExists(engineDir + '\php.ini') then
-    result := engineDir + '\php.ini'
-  else if FileExists(iniDir + '\php.ini') then
-    result := iniDir
-  else if FileExists(progDir + '\php.ini') then
-    result := progDir
+  if FileExists(engineDir + 'php.ini') then
+    result := engineDir + 'php.ini'
+  else if FileExists(iniDir + 'php.ini') then
+    result := iniDir + 'php.ini'
+  else if FileExists(progDir + 'php.ini') then
+    result := progDir + 'php.ini'
   else
-    result := DLLFolder;
+    result := DLLFolder + 'php.ini';
 end;
 
 function checkPHPSyntax(S: ansistring): ansistring;
@@ -2107,6 +2109,12 @@ begin
   //Screen.FocusedForm
 end;
 
+
+procedure TphpMOD.break_php(Sender: TObject; Parameters: TFunctionParams;
+  var ReturnValue: Variant; ZendVar: TZendVariable; TSRMLS_DC: Pointer);
+begin
+   if 1 > 0 then showmessage('dumy');
+end;
 
 procedure TphpMOD.checkCodeForErrors(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: Variant; ZendVar: TZendVariable;
