@@ -49,6 +49,12 @@ if (!class_exists('CoreBuilder')) {
 	require_once('phar://core.phar/coreBuilder.php');
 }
 
+require_once('phar://core.phar/obj_access/Registry.class.php');
+require_once('phar://core.phar/obj_access/t.class.php');
+require_once('phar://core.phar/obj_access/vGFormLinks.class.php');
+require_once('phar://core.phar/obj_access/vGObjectForm.class.php');
+
+
 /*** {!% DO NOT EDIT THIS STRING %!} ***/
 
 
