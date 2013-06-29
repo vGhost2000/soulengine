@@ -38,7 +38,7 @@ if (!defined('IS_APPLICATION_START')){
     }
     
      
-    require 'start.php';
+    require_once('phar://system.phar/start.php');
 
 
     if (!EMULATE_DVS_EXE){
@@ -79,7 +79,7 @@ if (!defined('IS_APPLICATION_START')){
     }
     
     if (!EMULATE_DVS_EXE){ 
-        // диалоги..
+        // РґРёР°Р»РѕРіРё..
         TForm::loadFromFile('dfm\uedt_Text');
         TForm::loadFromFile('dfm\uedt_EventTypes');
         TForm::loadFromFile('dfm\uInputText');

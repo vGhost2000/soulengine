@@ -173,13 +173,13 @@ class CodeBuilder
 	{
 		$this->code .= 'protected $___Events = array(';
 		foreach ($this->events as $event => $components) {
-			$this->code .= "array('" . implode("', '", $components) . "'),\n";
+			$this->code .= "'" . $event . "' => array('" . implode("', '", $components) . "'),\n";
 		}
 		$this->code .= ");\n}\n";
 
 		if (vGDEBUG) {
 			global $projectFile;
-			file_put_contents(dirname($projectFile) . '/' . $this->form . '-' . md5($this->code) . '.php');
+			file_put_contents(dirname($projectFile) . '/' . $this->form . '-' . md5($this->code) . '.php', $this->code);
 		}
 		return $this->code;
 	}
