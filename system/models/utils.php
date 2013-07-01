@@ -551,6 +551,7 @@ class myUtils {
         $info ['position'] = 'poScreenCenter';
         $info ['windowState'] = 'wsNormal';
         $info ['formStyle'] = 'fsNormal';
+        $info ['borderStyle'] = 'bsSizeable';
         $info ['i_close'] = true;
         $info ['i_min']   = true;
         $info ['i_max']   = true;
