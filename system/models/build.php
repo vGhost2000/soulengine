@@ -42,28 +42,46 @@ class DS_Build {
 
 }
 
-class CodeBuilder
+final class CodeBuilder
 {
 	private $form = '';
 	private $code = '';
 	private $objects;
 	private $events = array();
+	private $se_key;
+	private $start;
+	private $chars;
+	private $sint;
+	private $random_key;
 
-	public function __construct($cform)
+	public function __construct($cform, $se_key, $rand)
 	{
-		$this->form = $cform;
-		$this->code = '<' . "?php\n CLASS TForm" . $cform . " EXTENDS vGObjectForm\n{\n";
-		$this->code .= 'static $SelfObj = False;' . "\n";
-		$this->code .= '
+		$this->random_key = $rand;
+		$this->se_key     = $se_key;
+		$this->start      = rand(0,20);
+		$this->chars      = rand(5, 10);
+		$this->sint       = crc32(substr($se_key, $this->start, $this->chars));
+		$this->form       = $cform;
+		$this->code       = '<' . "?php\n\n" . $this->_getSecurityCode() . "\n\n final CLASS TForm" . $cform . " EXTENDS vGObjectForm\n{\n";
+		$this->code      .= 'static $SelfObj = False;' . "\n";
+		$this->code      .= '
 			Protected	$___MustBeObj	= Array(
 									"SCR"				=> Array("SCREEN"),
 									"APP"				=> Array("APPLICATION"),
 									"SCREEN"			=> Array("SCREEN"),
 									"APPLICATION"		=> Array("APPLICATION"),
 			);
+			private $__se_code_int; 
 
 			Public Function __construct($Name)
 			{
+				$this->__se_code_int = crc32(substr(get_se_string(0), ' . $this->start . ', ' . $this->chars . '));
+				if ($this->__se_code_int != ' . $this->sint . ') {
+					exit;
+					die();
+					return;
+				}
+
 				parent::__construct($Name);
 				self::$SelfObj = $this;
 				/* <OnCreateFormCode ---JhdYndkldfKkfkjkjk000dL3243ms;d-> */
@@ -82,6 +100,31 @@ class CodeBuilder
 				break;
 			}
 		}
+	}
+
+
+	private final function _getSecurityCode()
+	{
+		return '
+			' . $this->random_key[1] . '
+			if (md5($key . get_se_string(0)) != ' . $this->_md5($this->random_key[0] . $this->se_key) . ') {
+				unset($map, $len, $key );
+				exit;
+				die();
+			}
+			unset($map, $len, $key );
+		';
+	}
+
+
+	private final function _md5($value)
+	{
+		$res = array();
+		$value = md5($value);
+		for ($i = 0; $i < 32; $i++) {
+			$res[] = 'chr(' . ord($value[$i]) . ')';
+		}
+		return implode(' . ', $res);
 	}
 
 
@@ -130,6 +173,12 @@ class CodeBuilder
 		$this->code .= '
 			Public Function ' . $action . $component . '(' . DSApi::getEventParams($action, $this->objects[$component]) . ')
 			{
+				if ($this->__se_code_int != ' . $this->sint . ') {
+					exit;
+					die();
+					return;
+				}
+
 				global $APPLICATION, $SCREEN, $_c, $progDir, $_PARAMS, $argv;
 				' . $code . '
 			}

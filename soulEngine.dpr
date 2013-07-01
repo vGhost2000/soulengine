@@ -10,15 +10,11 @@ uses
   uPHPMod in 'uPHPMod.pas' {phpMOD: TDataModule},
   uGuiScreen in 'uGuiScreen.pas',
   uApplication in 'uApplication.pas',
-
-  {$IFDEF VS_EDITOR}
-  uPHPCatButtons in 'uPHPCatButtons.pas',
-  uVSEditor in 'uVSEditor.pas',
-  {$ENDIF}
-
   regGui in 'regGui.pas',
   Vcl.Themes,
-  Vcl.Styles;
+  Vcl.Styles,
+  uPhpEvents in 'uPhpEvents.pas',
+  core in 'core.pas';
 
 {$R *.res}
 
@@ -30,7 +26,6 @@ begin
   Application.ShowMainForm      := false;
 
   Application.CreateForm(T__mainForm, __mainForm);
-
   Application.Run;
 
 end.

@@ -18,6 +18,7 @@ uses
     {$IFDEF ADD_CHROMIUM}
       , guiChromium
     {$ENDIF}
+    , ZENDTypes
   ;
 
 var
@@ -34,6 +35,8 @@ function getPsvPHP(): TpsvPHP;
 procedure core_Init(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil);
 function buildFrameWork(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil): boolean;
 function loadEngine(): boolean;
+procedure get_se_string(ht: integer; return_value: pzval; return_value_ptr: pzval;
+  this_ptr: pzval; return_value_used: integer; TSRMLS_DC: pointer); cdecl;
 
 
 implementation
@@ -41,6 +44,42 @@ implementation
 function getPsvPHP(): TpsvPHP;
 begin
   Result := mypsvPHP;
+end;
+
+{*
+*     Метод возвращает в пхп по переданному индексу строковое значение
+*     32 байтного ключа которое задаётся при компилировнии программы
+*     Используется для связи между пхп исходниками и SE. Каждй скомпиленный
+*     проект будет иметь свои случайные строки и хэши что сделает невозможным
+*     пересобрать программу с чужими исходниками
+*
+*}
+procedure get_se_string(ht: integer; return_value: pzval; return_value_ptr: pzval;
+  this_ptr: pzval; return_value_used: integer; TSRMLS_DC: pointer); cdecl;
+var
+  param: pzval_array;
+  key: string;
+begin
+  if zend_get_parameters_ex(ht, param) <> SUCCESS then
+  begin
+    zend_wrong_param_count(TSRMLS_DC);
+    Exit;
+  end;
+
+  Case Z_LVAL(param[0]^) of
+    0 : ZVAL_STRING(return_value, 'some_engine_string_key_0_0000000', false);
+    1 : ZVAL_STRING(return_value, 'some_engine_string_key_1_0000000', false);
+    2 : ZVAL_STRING(return_value, 'some_engine_string_key_2_0000000', false);
+    3 : ZVAL_STRING(return_value, 'some_engine_string_key_3_0000000', false);
+    4 : ZVAL_STRING(return_value, 'some_engine_string_key_4_0000000', false);
+    5 : ZVAL_STRING(return_value, 'some_engine_string_key_5_0000000', false);
+    6 : ZVAL_STRING(return_value, 'some_engine_string_key_6_0000000', false);
+    7 : ZVAL_STRING(return_value, 'some_engine_string_key_7_0000000', false);
+    8 : ZVAL_STRING(return_value, 'some_engine_string_key_8_0000000', false);
+    9 : ZVAL_STRING(return_value, 'some_engine_string_key_9_0000000', false);
+    else ZVAL_BOOL(return_value, False);
+  end;
+  dispose_pzval_array(param);
 end;
 
 procedure core_Init(aPHPEngine: TPHPEngine = nil; aPsvPHP: TpsvPHP = nil);
@@ -67,7 +106,10 @@ begin
   {$ENDIF}
   InitializeDsUtils(myPHPEngine);
 
+  PHPEngine.AddFunction('get_se_string', @get_se_string);
+
   myPHPEngine.StartupEngine;
+
 end;
 
 
