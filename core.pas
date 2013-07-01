@@ -67,16 +67,16 @@ begin
   end;
 
   Case Z_LVAL(param[0]^) of
-    0 : ZVAL_STRING(return_value, 'some_engine_string_key_0_0000000', false);
-    1 : ZVAL_STRING(return_value, 'some_engine_string_key_1_0000000', false);
-    2 : ZVAL_STRING(return_value, 'some_engine_string_key_2_0000000', false);
-    3 : ZVAL_STRING(return_value, 'some_engine_string_key_3_0000000', false);
-    4 : ZVAL_STRING(return_value, 'some_engine_string_key_4_0000000', false);
-    5 : ZVAL_STRING(return_value, 'some_engine_string_key_5_0000000', false);
-    6 : ZVAL_STRING(return_value, 'some_engine_string_key_6_0000000', false);
-    7 : ZVAL_STRING(return_value, 'some_engine_string_key_7_0000000', false);
-    8 : ZVAL_STRING(return_value, 'some_engine_string_key_8_0000000', false);
-    9 : ZVAL_STRING(return_value, 'some_engine_string_key_9_0000000', false);
+    0 : ZVAL_STRING(return_value, 'some_engine_string_key_0_0000000', true);
+    1 : ZVAL_STRING(return_value, 'some_engine_string_key_1_0000000', true);
+    2 : ZVAL_STRING(return_value, 'some_engine_string_key_2_0000000', true);
+    3 : ZVAL_STRING(return_value, 'some_engine_string_key_3_0000000', true);
+    4 : ZVAL_STRING(return_value, 'some_engine_string_key_4_0000000', true);
+    5 : ZVAL_STRING(return_value, 'some_engine_string_key_5_0000000', true);
+    6 : ZVAL_STRING(return_value, 'some_engine_string_key_6_0000000', true);
+    7 : ZVAL_STRING(return_value, 'some_engine_string_key_7_0000000', true);
+    8 : ZVAL_STRING(return_value, 'some_engine_string_key_8_0000000', true);
+    9 : ZVAL_STRING(return_value, 'some_engine_string_key_9_0000000', true);
     else ZVAL_BOOL(return_value, False);
   end;
   dispose_pzval_array(param);

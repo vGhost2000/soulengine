@@ -131,7 +131,10 @@ final class CodeBuilder
 	public function addEvent($component, $action, $code)
 	{
 		if ($component == '--fmedit') {
-			$component = $this->form;
+			$component  = $this->form;
+			$event_name = 'self';
+		} else {
+			$event_name = $component;
 		}
 
 		if (empty($this->objects)) {
@@ -149,8 +152,9 @@ final class CodeBuilder
 		if (empty($this->events[$action])) {
 			$this->events[$action] = array();
 		}
-		$this->events[$action][] = $component;
+		$this->events[$action][] = $event_name;
 
+		$project_forms = array_lower($GLOBALS['_FORMS']);
 		$S = $R = array();
 		if (preg_match_all('#[^\w]c\s*\(\s*(?:\'|"|\$)([a-z0-9_>-]+)(?:\'|"|)\s*\)#si', ' ' . $code, $m)) {
 			foreach ($m[0] as $key => $search) {
@@ -158,6 +162,8 @@ final class CodeBuilder
 				$cpos = strpos($pattern, '->');
 				if ($cpos) {
 					$pattern = '$GLOBALS[\'' . strtolower(substr($pattern, 0, $cpos)) . '\']' . substr($pattern, $cpos);
+				} elseif (in_array(strtolower($pattern), $project_forms)) {
+					$pattern = '$GLOBALS[\'' . strtolower($pattern) . '\']->self';
 				} else {
 					$pattern = '$this->' . $pattern;
 				}

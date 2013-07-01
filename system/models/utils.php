@@ -533,37 +533,39 @@ class myUtils {
         if (!CApi::doEvent('onStopAfter')) return;
         /****** ---- *****/
     }
-    
-    static function createForm($name){
-        
-        global $projectFile, $_FORMS, $myProject;
-        
-        if (!file_exists(SYSTEM_DIR . '/blanks/form.dfm'))
-            msg(t('Blank form is not found: /blanks/form.dfm'));
-            
-        if (!file_exists(dirname($projectFile)))
-            mkdir(dirname($projectFile),0777,true);
-        
-        
-        copy(SYSTEM_DIR . '/blanks/form.dfm', dirname($projectFile) .'/'. $name . '.dfm');
-        $_FORMS[] = $name;
-        
-        $info ['position'] = 'poScreenCenter';
-        $info ['windowState'] = 'wsNormal';
-        $info ['formStyle'] = 'fsNormal';
-        $info ['borderStyle'] = 'bsSizeable';
-        $info ['i_close'] = true;
-        $info ['i_min']   = true;
-        $info ['i_max']   = true;
-        
-        $myProject->formsInfo[$name] = $info;
-        
-      
-        
-        c('fmMain->tabForms',1)->addPage($name);
-        self::saveProject();
-    }
-    
+
+
+	public static function createForm($name)
+	{
+		global $projectFile, $_FORMS, $myProject;
+
+		if (!file_exists('phar://system.phar/blanks/form.dfm')) {
+			msg(t('Blank form is not found: phar://system.phar/blanks/form.dfm'));
+		}
+
+		$prj_dir = dirname($projectFile) . '/';
+		if (!file_exists(dirname($projectFile))) {
+			mkdir($prj_dir, 0777, true);
+		}
+
+		copy('phar://system.phar/blanks/form.dfm', $prj_dir . $name . '.dfm');
+		$_FORMS[] = $name;
+
+		$info['position']    = 'poScreenCenter';
+		$info['windowState'] = 'wsNormal';
+		$info['formStyle']   = 'fsNormal';
+		$info['borderStyle'] = 'bsSizeable';
+		$info['i_close']     = true;
+		$info['i_min']       = true;
+		$info['i_max']       = true;
+
+		$myProject->formsInfo[$name] = $info;
+
+		c('fmMain->tabForms', 1)->addPage($name);
+		self::saveProject();
+	}
+
+
     static function newForm(){
         
         $name = inputText(t('Create new form'),t('Form name'));
