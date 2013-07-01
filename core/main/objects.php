@@ -162,7 +162,7 @@ function uni_unserialize($str){
 /* TComponent class ala Delphi */
 class TComponent extends TObject {
 	
-	#public hekpKeyword // здесь храняться все нестандартные свойства
+	#public hekpKeyword // Р·РґРµСЃСЊ С…СЂР°РЅСЏС‚СЊСЃСЏ РІСЃРµ РЅРµСЃС‚Р°РЅРґР°СЂС‚РЅС‹Рµ СЃРІРѕР№СЃС‚РІР°
 	
 	function valid(){
 	    return true;
@@ -177,7 +177,7 @@ class TComponent extends TObject {
 	    control_helpkeyword($this->self, $v);
 	}
 	
-	// доп инфа для нестандартных свойств
+	// РґРѕРї РёРЅС„Р° РґР»СЏ РЅРµСЃС‚Р°РЅРґР°СЂС‚РЅС‹С… СЃРІРѕР№СЃС‚РІ
 	function __addPropEx($nm, $val){
 
 	    $class = $this->class_name_ex ? $this->class_name_ex : $this->class_name;		    
@@ -210,7 +210,7 @@ class TComponent extends TObject {
 			));
 	}
 	
-	// достаем свойство...
+	// РґРѕСЃС‚Р°РµРј СЃРІРѕР№СЃС‚РІРѕ...
 	function __getPropEx($nm){
 	    
 	    $result = uni_unserialize(control_helpkeyword($this->self, null));
@@ -533,7 +533,7 @@ class TControl extends TComponent {
 	    return $result;
 	}
 	
-	// возвращает список всех компонентов объекта по паренту, а не onwer'y
+	// РІРѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє РІСЃРµС… РєРѕРјРїРѕРЅРµРЅС‚РѕРІ РѕР±СЉРµРєС‚Р° РїРѕ РїР°СЂРµРЅС‚Сѓ, Р° РЅРµ onwer'y
 	function childComponents($recursive = true){
 	    
 	    $result = array();
@@ -921,9 +921,13 @@ function ic($str, $check_thread = true)
 }
 
 
-function с($str, $cached = false){
+/*
+ * @TODO: WTF?! РІРѕС‚ РЅСѓ РЅР°С…СЂРµРЅР° РёРјСЏ С„-Рё СЂСѓСЃСЃРєР°СЏ РЎ РЅР° РєРёСЂРёР»Р»РёС†Рµ?!
+ *
+function СЃ($str, $cached = false){
     return c($str, $cached);
 }
+*/
 
 // cSetProp('form.object.caption', 'text')
 function cSetProp($str, $value){

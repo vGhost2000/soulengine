@@ -1,6 +1,6 @@
-<?
+<?php
 
-// простые команды... наследие от MSBScript
+// РїСЂРѕСЃС‚С‹Рµ РєРѕРјР°РЅРґС‹... РЅР°СЃР»РµРґРёРµ РѕС‚ MSBScript
 
 
 global $_c;
@@ -74,51 +74,56 @@ function runWith($file, $program){
 
 $_c->setConstList(array('LD_NONE','LD_XY','LD_XYWH'), 0);
 
-function loadForm($name, $mode = LD_XY){
-    
-    if ( sync(__FUNCTION__, func_get_args()) ) return;    
-    
-    global $SCREEN, $LOADER;
-               
-        $forms = $SCREEN->formList();
-        $aform = $SCREEN->activeForm;
-        
-        if ( is_string($name) )
-            $form = c($name);
-        else if ( !$name->valid() )
-            $form = $LOADER->LoadForm($name->nameParam);
-        else
-            $form = $name;
-        
-        if ( !$form || !$form->valid() ) return;
-        
-        if ($mode == LD_XY || $mode == LD_XYWH){
-            
-            $form->left  = $aform->left;
-            $form->top   = $aform->top;
-        }
-        
-        if ($mode == LD_XYWH){
-            
-            $form->width  = $aform->width;
-            $form->height = $aform->height;
-        }
-        
-        // делаем форму главной, чтобы приложенние корректно сворачивалось
-        $title = $GLOBALS['APPLICATION']->title;
-        $LOADER->SetMainForm($form);
-        $form->show();
-        
-        foreach ($forms as $el){
-            
-            if ($el->self != $form->self)
-                $el->hide();
-        }
-        
-        //setMainForm($form);
-        $GLOBALS['APPLICATION']->MainFormOnTaskbar = true; // fix bug
-        $GLOBALS['APPLICATION']->title = $title;
+function loadForm($name, $mode = LD_XY)
+{
+	if (sync(__FUNCTION__, func_get_args())) {
+		return;
+	}
+
+	global $SCREEN, $LOADER;
+
+	$forms = $SCREEN->formList();
+	$aform = $SCREEN->activeForm;
+
+	if (is_string($name)) {
+		$name = c($name);
+	}
+	if (!$name->valid()) {
+		$form = $LOADER->LoadForm($name->nameParam);
+	} else {
+		$form = $name;
+	}
+
+	if (!$form || !$form->valid()) {
+		return;
+	}
+
+	if ($mode == LD_XY || $mode == LD_XYWH) {
+		$form->left = $aform->left;
+		$form->top  = $aform->top;
+	}
+
+	if ($mode == LD_XYWH) {
+		$form->width  = $aform->width;
+		$form->height = $aform->height;
+	}
+
+	// РґРµР»Р°РµРј С„РѕСЂРјСѓ РіР»Р°РІРЅРѕР№, С‡С‚РѕР±С‹ РїСЂРёР»РѕР¶РµРЅРЅРёРµ РєРѕСЂСЂРµРєС‚РЅРѕ СЃРІРѕСЂР°С‡РёРІР°Р»РѕСЃСЊ
+	$title = $GLOBALS['APPLICATION']->title;
+	$LOADER->SetMainForm($form);
+	$form->show();
+
+	foreach ($forms as $el) {
+		if ($el->self != $form->self) {
+			$el->hide();
+		}
+	}
+
+	//setMainForm($form);
+	$GLOBALS['APPLICATION']->MainFormOnTaskbar = true;
+	$GLOBALS['APPLICATION']->title = $title;
 }
+
 
 $_c->SW_SHOWMODAL = 15;
 function showForm($name, $mode = SW_SHOW){
@@ -166,7 +171,7 @@ function cloneForm($name, $load_events = true){
     return $LOADER->CreateForm((string)$name);
 }
 
-// запись в реестр...
+// Р·Р°РїРёСЃСЊ РІ СЂРµРµСЃС‚СЂ...
 function writeRegKey($root, $path, $value, $type = STRING){
         
         $reg = new TRegistry;
@@ -176,7 +181,7 @@ function writeRegKey($root, $path, $value, $type = STRING){
         unset($reg);
 }
 
-// чтение из реестра
+// С‡С‚РµРЅРёРµ РёР· СЂРµРµСЃС‚СЂР°
 function readRegKey($root, $path, &$buffer, $type = STRING){
         
     $reg = new TRegistry;
@@ -187,7 +192,7 @@ function readRegKey($root, $path, &$buffer, $type = STRING){
     unset($reg);
 }
 
-// запрет таск менеджера...
+// Р·Р°РїСЂРµС‚ С‚Р°СЃРє РјРµРЅРµРґР¶РµСЂР°...
 function DisableTaskMng($enable = true){
         
         $reg = new TRegistry; 
@@ -281,7 +286,7 @@ function array_insert($array,$pos,$val){
     return $array;
 }
 
-// создает и возвращает абсолютную копию объекта с событиями
+// СЃРѕР·РґР°РµС‚ Рё РІРѕР·РІСЂР°С‰Р°РµС‚ Р°Р±СЃРѕР»СЋС‚РЅСѓСЋ РєРѕРїРёСЋ РѕР±СЉРµРєС‚Р° СЃ СЃРѕР±С‹С‚РёСЏРјРё
 function objCreate($obj, $parent = false){
     
     $GLOBALS['__EVENTS_API']['oncreate'] = '__exEvents::OnClick';

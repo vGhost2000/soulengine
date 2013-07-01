@@ -1,10 +1,10 @@
-<?
+<?php
 
 
 class myProperties {
     
     
-    public $panels; // панель свойств компонентов...
+    public $panels; // РїР°РЅРµР»СЊ СЃРІРѕР№СЃС‚РІ РєРѕРјРїРѕРЅРµРЅС‚РѕРІ...
     
     public $params;
     public $elements;

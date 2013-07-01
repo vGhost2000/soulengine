@@ -11,37 +11,40 @@
 		createForm, createFormWithEvents, saveFormAsDfm
 		object_resource2text, object_text2resource
 		
-  Библиотека для загрузки и сохранения форм из dfm файлов...
+  Р‘РёР±Р»РёРѕС‚РµРєР° РґР»СЏ Р·Р°РіСЂСѓР·РєРё Рё СЃРѕС…СЂР°РЅРµРЅРёСЏ С„РѕСЂРј РёР· dfm С„Р°Р№Р»РѕРІ...
   
   
 */
 
-// создание формы на основе внешнего dfm файла
+// СЃРѕР·РґР°РЅРёРµ С„РѕСЂРјС‹ РЅР° РѕСЃРЅРѕРІРµ РІРЅРµС€РЅРµРіРѕ dfm С„Р°Р№Р»Р°
 function dfm_read($dfm_file_name, $aform = false, $str = false, $form_name = false, $is_runtime = false)
 {
-	if ($dfm_file_name)
+	if ($dfm_file_name) {
 		checkFileV2($dfm_file_name);
+	}
 
-	if (!$aform)
-		$form = new TForm( $GLOBALS['APPLICATION'] );
-	else {
+	if (!$aform) {
+		$form = new TForm($GLOBALS['APPLICATION']);
+	} else {
 		$form = $aform;
 		$form->positionEx = $form->position;
 	}
-	
-	//$dfm_file_name = replaceSr($dfm_file_name);
-	
-	if ( !$str )
+
+	if (!$str) {
 		$str = file_get_contents($dfm_file_name);
-	
-		gui_readStr($form->self, $str);
-		
-	
-	if ($form_name)
+	}
+	if (empty($str)) {
+		throw new Exception('ERROR: dfm_read failed get dfm structure!');
+	}
+
+	gui_readStr($form->self, $str);
+
+	if ($form_name) {
 		$form->name = $form_name;
-	
+	}
+
 	$components = $form->componentList;
-	
+
 	for ($i=0;$i<count($components);$i++){
 		
 		$el =& $components[$i];
@@ -65,7 +68,7 @@ function dfm_read($dfm_file_name, $aform = false, $str = false, $form_name = fal
  return $form->self;
 }
 
-// сохранение формы в dfm файл
+// СЃРѕС…СЂР°РЅРµРЅРёРµ С„РѕСЂРјС‹ РІ dfm С„Р°Р№Р»
 function dfm_write($dfm_file_name, TForm $form)
 {
 	$dfm_file_name = replaceSr($dfm_file_name);
@@ -112,7 +115,7 @@ function createFormWithEvents($name, $init = false){
 	return $res;
 }
 
-// динамическая загрузка событий для формы...
+// РґРёРЅР°РјРёС‡РµСЃРєР°СЏ Р·Р°РіСЂСѓР·РєР° СЃРѕР±С‹С‚РёР№ РґР»СЏ С„РѕСЂРјС‹...
 function loadFormEvents(TForm &$form){
         
 	

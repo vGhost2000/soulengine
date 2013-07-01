@@ -4,6 +4,22 @@ function _empty(){}
 function replaceSl($s){return str_replace("\\","/",$s);}
 function replaceSr($s){return str_replace("/","\\",$s);}
 
+/*
+ * Процедура опускает строковые значения массива в нижний регистр
+ * 
+ * @param   array   исходный массив
+ * 
+ * @return  array   Результирующий массив со значениями в нижнем регистре
+ */
+function array_lower($array)
+{
+	$tmp = array();
+	foreach ($array as $k => $v) {
+		$tmp[$k] = is_string($v) ? strtolower($v) : $v;
+	}
+	return $tmp;
+}
+
 
 function pre($obj){
 	
