@@ -58,7 +58,7 @@ class myModules
         return false;
     }
     
-    // ���������� ������ ����������� ��� ����������� �������...
+    // возвращает список необходимых для подключения модулей...
     static function getNeed(){
         
         global $myProject, $fmEdit, $_components;
@@ -90,7 +90,7 @@ class myModules
             $myProject->config['modules'][] = $module;
     }
     
-    // attach_dll ����������� � ��� ����������
+    // attach_dll прикреплять к ехе расширения
     static function inc($file = false, $attach_dll = false){
         
         global $myProject, $projectFile;
@@ -108,7 +108,7 @@ class myModules
             
              
 
-            // �������� ��� ������, ���� �� ����������
+            // копируем сам модуль, если не скопирован
             //if (!file_exists(dirname($file).'/ext/'.$mod)){
                 if (!$attach_dll){
                     $md5_1 = $md5_2 = false;
@@ -128,7 +128,7 @@ class myModules
                 }
             //}
             
-            // �������� ��������� dll-�� ������...
+            // копируем зависимые dll-ки модуля...
             foreach ((array)$GLOBALS['MODULES_INFO'][$mod] as $dll){
                 
                     if (is_file($dir . $dll))
@@ -174,7 +174,7 @@ class myModules
     
     
 	/*
-	*	����� ������� ����� ������� �� �������� �� �������� ������� ���������� ���, � ����� �� ������� � ���� ��������� �������������� dll'��
+	*	Метод очищает папку проекта от убранных из настроек проекта расширений пхп, а также от зидущих с ними зависимых дополнительных dll'ок
 	*
 	*	@return void
 	*/
@@ -188,12 +188,12 @@ class myModules
 		$files   = findFilesV2($prj_dir . '/ext/', 'dll');
 
 		foreach ($files as $file){
-			// ���� ���� ����������� � �������, �������
+			// если файл отсутствует в модулях, удаляем
 			if (!in_array($file, $modules)){
 
 				unlink($prj_dir . '/ext/' . $file);
 
-				// ������� ��������� dll-��
+				// удаляем зависимые dll-ки
 				foreach ((array)$info[$file] as $dll) {
 					if (file_exists($prj_dir . '/' . $dll)) {
 						unlink($prj_dir . '/' . $dll);
@@ -205,8 +205,8 @@ class myModules
 
 
 	/*
-	*	����� �������� ����������� ������ �� ������� � ���������� ������� � ����� � ��������. ������������ ����� ������������ �� �����
-	*	����� ����� ������� ���������� ����� ��������� ��� ��� dll'��
+	*	Метод копирует недостающие модули из массива в настройках проекта в папку с проектом. Существующие файлы копироваться не будут
+	*	Кроме самих модулей копируются также зависимые для них dll'ки
 	*
 	*	@return void
 	*/
@@ -220,13 +220,13 @@ class myModules
 		$prj_dir = dirname($projectFile);
 
 		foreach ($modules as $file){
-			// ���� ���� ����������� � ������ ������, ���������� ������
+			// если файл отсутствует в списке файлов, копировать нечего
 			if (!in_array($file, $files)){
 				continue;
 			}
 			x_copy(DOC_ROOT . $file, $prj_dir . '/ext/' . $file, true);
 
-			// �������� ��������� dll-��
+			// копируем зависимые dll-ки
 			if (!empty($info[$file])) {
 				foreach ((array)$info[$file] as $dll) {
 					x_copy(DOC_ROOT . $dll, $prj_dir . '/' . $dll, true);

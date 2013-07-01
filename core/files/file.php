@@ -9,8 +9,8 @@ function shortName($file){
         return $file;
 }
 
-// ���������� ����� ��� ������� ".", ��� ��������� � ������ ������� ��� ��������
-// ���������
+// расширение файла без символа ".", все переводит в нижний регистр для удобства
+// сравнения
 function fileExt($file){
     $file = basename($file);
     $k = strrpos($file,'.');
@@ -18,8 +18,8 @@ function fileExt($file){
     return strtolower(substr($file, $k+1, strlen($file)-$k-1));
 }
 
-// ���������� true ���� ���� $file ���������� $ext, ���� ��� ���������� �������
-// � ������� $ext. $ext - ������ ��� ������
+// Возвращает true если файл $file расширения $ext, либо его расширение имеется
+// в массиве $ext. $ext - массив или строка
 function checkExt($file, $ext){
     $file_ext = fileExt($file);
     
@@ -37,7 +37,7 @@ function checkExt($file, $ext){
     return false;
 }
 
-// ���������� �������� ����� ��� ����������
+// Возвращает название файла без расширения
 function basenameNoExt($file){
     $file = basename($file);
     $ext = fileExt($file);
@@ -93,8 +93,8 @@ function findFilesV2($dir, $ext = null, $recursive = false, $with_dir = false)
 }
 
 
-// ����� ������ � �����... � ��������� �� ����.
-// ����� ������ �� ���������� exts - ������ ����������
+// поиск файлов в папке... в подпапках не ищет.
+// Можно искать по расширению exts - список расширений
 function findFiles($dir, $exts = null, $recursive = false, $with_dir = false){
 	if (!preg_match('#^phar#', $dir))throw new Exception($dir);
     $dir = replaceSl($dir);
@@ -144,8 +144,8 @@ function findDirs($dir){
     if (!is_dir($dir)) return array();
     
     $files = scandir($dir);
-    array_shift($files); // remove �.� from array
-    array_shift($files); // remove �..� from array
+    array_shift($files); // remove ‘.’ from array
+    array_shift($files); // remove ‘..’ from array
     
     $result = array();
     foreach ($files as $file){
@@ -164,8 +164,8 @@ function rmdir_recursive($dir) {
     if (!is_dir($dir)) return false;
     
     $files = scandir($dir);
-    array_shift($files); // remove �.� from array
-    array_shift($files); // remove �..� from array
+    array_shift($files); // remove ‘.’ from array
+    array_shift($files); // remove ‘..’ from array
     
     foreach ($files as $file) {
         $file = $dir . '/' . $file;
