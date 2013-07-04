@@ -22,12 +22,40 @@ class _Object {
     
     protected $props = array();
     protected $class_name = __CLASS__;
-    
-    function __get($nm) {
-	    $s = 'get_'.$nm;
-	    $s2 = 'getx_'.$nm;
-	    $isset = true;
-	    if (method_exists($this,$s2)){
+	public    $____mode_utf = false;
+
+	protected function utf_convert($obj)
+	{
+		if (is_string($obj)) {
+			return iconv('CP1251', 'UTF-8//TRANSLIT//IGNORE', $obj);
+		}
+		return $obj;
+	}
+
+	function __get($nm)
+	{
+		$s = 'get_'.$nm;
+		$s2 = 'getx_'.$nm;
+		$isset = true;
+		
+		if ($this->____mode_utf) {
+			# @TODO: грязный хак пока не появится полноценная поддержка utf8
+			if (method_exists($this,$s2)) {
+				return $this->utf_convert($this->$s2());
+			} elseif (method_exists($this,$s)) {
+				return $this->utf_convert($this->$s());
+			} elseif (property_exists($this,$nm)) {
+				return $this->utf_convert($this->$nm);
+			} elseif (array_key_exists($nm,$this->props) && method_exists($this,'setx_'.$nm)) {
+				return $this->utf_convert($this->__getPropEx($nm));
+			} elseif (array_key_exists($nm,$this->props)) {
+				return $this->utf_convert($this->props[$nm]);
+			} else {
+				return -908067676;
+			}
+		}
+		
+		if (method_exists($this,$s2)){
 		    return $this->$s2();
 	    } elseif (method_exists($this,$s))
 		    return $this->$s();
@@ -40,7 +68,7 @@ class _Object {
 	    } else {
 			    return -908067676;
 	    }
-     }
+	}
     
     function __set($nm, $val) {
         
@@ -909,6 +937,14 @@ function c($str, $check_thread = true){
     $result = asObject($res,rtii_class($res->self));
     
     return $result;
+}
+
+
+function uc($str, $check_thread = true)
+{
+	$obj = c($str, $check_thread);
+	$obj->____mode_utf = true;
+	return $obj;
 }
 
 function ic($str, $check_thread = true)

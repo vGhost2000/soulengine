@@ -77,6 +77,7 @@ final class CodeBuilder
 			{
 				$this->__se_code_int = crc32(substr(get_se_string(0), ' . $this->start . ', ' . $this->chars . '));
 				if ($this->__se_code_int != ' . $this->sint . ') {
+					application_terminate();
 					exit;
 					die();
 					return;
@@ -109,10 +110,16 @@ final class CodeBuilder
 			' . $this->random_key[1] . '
 			if (md5($key . get_se_string(0)) != ' . $this->_md5($this->random_key[0] . $this->se_key) . ') {
 				unset($map, $len, $key );
+				application_terminate();
 				exit;
 				die();
 			}
 			unset($map, $len, $key );
+			if (substr(Registry::get("____uuid"), 1) != substr(file_get_contents("phar://main_program.phar/PROGRAMMER-HWID.txt"), 1)) {
+				application_terminate();
+				exit;
+				die();
+			}
 		';
 	}
 
@@ -156,16 +163,17 @@ final class CodeBuilder
 
 		$project_forms = array_lower($GLOBALS['_FORMS']);
 		$S = $R = array();
-		if (preg_match_all('#[^\w]c\s*\(\s*(?:\'|"|\$)([a-z0-9_>-]+)(?:\'|"|)\s*\)#si', ' ' . $code, $m)) {
+		if (preg_match_all('#[^\w](u)?c\s*\(\s*(?:\'|"|\$)([a-z0-9_>-]+)(?:\'|"|)\s*\)#si', ' ' . $code, $m)) {
 			foreach ($m[0] as $key => $search) {
-				$pattern = $m[1][$key];
+				$pattern = $m[2][$key];
+				$prefix  = (strtolower($m[1][$key]) == 'u') ? '___uUutf_' : '';
 				$cpos = strpos($pattern, '->');
 				if ($cpos) {
-					$pattern = '$GLOBALS[\'' . strtolower(substr($pattern, 0, $cpos)) . '\']' . substr($pattern, $cpos);
+					$pattern = '$GLOBALS[\'' . strtolower(substr($pattern, 0, $cpos)) . '\']->' . $prefix . substr($pattern, $cpos + 2);
 				} elseif (in_array(strtolower($pattern), $project_forms)) {
-					$pattern = '$GLOBALS[\'' . strtolower($pattern) . '\']->self';
+					$pattern = '$GLOBALS[\'' . strtolower($pattern) . '\']->' . $prefix . 'self';
 				} else {
-					$pattern = '$this->' . $pattern;
+					$pattern = '$this->' . $prefix . $pattern;
 				}
 				if ($search[0] != 'c' && $search[0] != 'C') {
 					$pattern = $search[0] . $pattern;
