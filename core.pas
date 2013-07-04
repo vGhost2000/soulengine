@@ -232,13 +232,13 @@ begin
     uPHPMod.phpMOD.RunCode('<?php require_once("phar://" . $GLOBALS["progDir"] . "modules.phar/include.php"); ?>');
   end;
 
-  if FileExists(uPHPMod.progDir + 'main_program.phar') AND
+  if FileExists(uPHPMod.progDir + 'main_program.phar.dll') AND
     // выполняем файл программы только если пристутствует подпись
     (program_type <> 'THIS_IS_IDE_TYPE_Hk8Geb3_3He' + four_zero_str)
   then begin
     // чекнем контрольную сумму архива со скриптами пользовательской программы
     if (main_program_phar_md5 <> 'main_program_phar_md50000000' + four_zero_str)
-      AND (main_program_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'main_program.phar')))
+      AND (main_program_phar_md5 <> LowerCase(xMD5_File(uPHPMod.progDir + 'main_program.phar.dll')))
     then begin
       {$IFDEF SHOW_DEBUG_MESSAGES}
         showmessage('Wrong main_program.phar, APPLICATION.Terminate');
@@ -246,7 +246,7 @@ begin
       exit;
     end;
 
-    uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "main_program.phar", "main_program.phar");' +
+    uPHPMod.phpMOD.RunCode('<?php Phar::loadPhar($GLOBALS["progDir"] . "main_program.phar.dll", "main_program.phar");' +
       'require_once("phar://main_program.phar/include.php"); ?>'
     );
     result := true;
