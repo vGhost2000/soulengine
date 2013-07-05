@@ -1201,7 +1201,7 @@ begin
   PHPEngine.AddFunction('gui_threadSynchronize', @gui_threadSynchronize);
   PHPEngine.AddFunction('gui_threadSync', @gui_threadSynchronize);
   PHPEngine.AddFunction('gui_threadData', @gui_threadData);
-  PHPEngine.AddFunction('gui_threadIsset', @gui_threadDataIsset);
+  PHPEngine.AddFunction('gui_threadDataIsset', @gui_threadDataIsset);
   PHPEngine.AddFunction('gui_threadUnset', @gui_threadDataUnset);
 
   PHPEngine.AddFunction('gui_threadGetCount', @gui_threadGetCount);
