@@ -161,28 +161,7 @@ final class CodeBuilder
 		}
 		$this->events[$action][] = $event_name;
 
-		$project_forms = array_lower($GLOBALS['_FORMS']);
-		$S = $R = array();
-		if (preg_match_all('#[^\w](u)?c\s*\(\s*(?:\'|"|\$)([a-z0-9_>-]+)(?:\'|"|)\s*\)#si', ' ' . $code, $m)) {
-			foreach ($m[0] as $key => $search) {
-				$pattern = $m[2][$key];
-				$prefix  = (strtolower($m[1][$key]) == 'u') ? '___uUutf_' : '';
-				$cpos = strpos($pattern, '->');
-				if ($cpos) {
-					$pattern = '$GLOBALS[\'' . strtolower(substr($pattern, 0, $cpos)) . '\']->' . $prefix . substr($pattern, $cpos + 2);
-				} elseif (in_array(strtolower($pattern), $project_forms)) {
-					$pattern = '$GLOBALS[\'' . strtolower($pattern) . '\']->' . $prefix . 'self';
-				} else {
-					$pattern = '$this->' . $prefix . $pattern;
-				}
-				if ($search[0] != 'c' && $search[0] != 'C') {
-					$pattern = $search[0] . $pattern;
-				}
-				$S[] = $search;
-				$R[] = $pattern;
-			}
-			$code = str_replace($S, $R, $code);
-		}
+		$code = self::optimizeCode($code);
 
 		$this->code .= '
 			Public Function ' . $action . $component . '(' . DSApi::getEventParams($action, $this->objects[$component]) . ')
@@ -198,6 +177,34 @@ final class CodeBuilder
 			}
 		';
 		return true;
+	}
+
+
+	public static function optimizeCode($code, $scope = '$this->')
+	{
+		$project_forms = array_lower($GLOBALS['_FORMS']);
+		$S = $R = array();
+		if (preg_match_all('#[^\w](u)?c\s*\(\s*(?:\'|"|\$)([a-z0-9_>-]+)(?:\'|"|)\s*\)#si', ' ' . $code, $m)) {
+			foreach ($m[0] as $key => $search) {
+				$pattern = $m[2][$key];
+				$prefix  = (strtolower($m[1][$key]) == 'u') ? '___uUutf_' : '';
+				$cpos = strpos($pattern, '->');
+				if ($cpos) {
+					$pattern = '$GLOBALS[\'' . strtolower(substr($pattern, 0, $cpos)) . '\']->' . $prefix . substr($pattern, $cpos + 2);
+				} elseif (in_array(strtolower($pattern), $project_forms)) {
+					$pattern = '$GLOBALS[\'' . strtolower($pattern) . '\']->' . $prefix . 'self';
+				} else {
+					$pattern = $scope . $prefix . $pattern;
+				}
+				if ($search[0] != 'c' && $search[0] != 'C') {
+					$pattern = $search[0] . $pattern;
+				}
+				$S[] = $search;
+				$R[] = $pattern;
+			}
+			$code = str_replace($S, $R, $code);
+		}
+		return $code; 
 	}
 
 

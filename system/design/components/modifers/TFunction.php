@@ -1,16 +1,16 @@
-<?
+<?php
 
 
-class modifer_TFunction {
-    
-    /*function listEvent(){
-        
-        return array();
-    }*/
-    
-    function toResult($form_name, $name, $info, $eventList){
+class modifer_TFunction
+{
+	/*function listEvent()
+	{
+		return array();
+	}*/
+
 	
-	$code = TFunction::__register($form_name, $name, $info, $eventList);
-        myCompile::addCompileCode($code);
-    }
+	public function toResultV2($form_name, $name, $info, $eventList)
+	{
+		return TFunction::__register($form_name, $name, $info, $eventList);
+	}
 }
