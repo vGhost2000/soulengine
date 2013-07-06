@@ -2185,8 +2185,10 @@ begin
   //Application.Free;
 
   {$IFDEF ADD_CHROMIUM}
+{ vG TEMP COMMENT
   cefvcl.CefFinalization;
   CeflibFinalization;
+  }
   {$ENDIF}
   TrayIconFinal;
   Exitprocess(0);
@@ -5021,6 +5023,7 @@ begin
       3: ZendVar.AsBoolean := Browser.CanGoBack;
       4: Browser.GoForward;
       5: ZendVar.AsBoolean := Browser.CanGoForward;
+{ vG TEMP COMMENT
       6: Browser.ShowDevTools;
       7: Browser.CloseDevTools;
       8: Browser.HidePopup;
@@ -5030,21 +5033,23 @@ begin
           Browser.SetFocus(ARR[0])
         else
           Browser.SetFocus(True);
-      end;
+      end;                     }
       10: Browser.ReloadIgnoreCache;
       11: Browser.StopLoad;
+{ vG TEMP COMMENT
       12: if Length(Arr) > 0 then
           Browser.SendFocusEvent(arr[0]);
       13: if Length(Arr) > 4 then
           Browser.SendKeyEvent(TCefKeyType(arr[0]), arr[1], arr[2], arr[3], arr[4]);
       14: if Length(Arr) > 4 then
           Browser.SendMouseClickEvent(arr[0], arr[1],
-            TCefMouseButtonType(arr[2]), arr[3], arr[4]);
+            TCefMouseButtonType(arr[2]), arr[3], arr[4]);                           }
       15: if Length(arr) > 0 then
           Load(arr[0]);
       16: if Length(arr) > 1 then
           ScrollBy(arr[0], arr[1]);
-      17: Browser.ClearHistory;
+{ vG TEMP COMMENT
+      17: Browser.ClearHistory; }
       18: ;
       19: ;
       20: ;
@@ -5056,14 +5061,16 @@ begin
       26: Browser.MainFrame.Paste;
       27: Browser.MainFrame.Del;
       28: Browser.MainFrame.SelectAll;
-      29: Browser.MainFrame.Print;
+{ vG TEMP COMMENT
+      29: Browser.MainFrame.Print; }
       30: Browser.MainFrame.ViewSource;
       31: if Length(arr) > 0 then
           Browser.MainFrame.LoadUrl(arr[0]);
       32: if Length(arr) > 1 then
           Browser.MainFrame.LoadString(arr[0], arr[1]);
+{ vG TEMP COMMENT
       33: if Length(arr) > 1 then
-          Browser.MainFrame.LoadFile(arr[0], arr[1]);
+          Browser.MainFrame.LoadFile(arr[0], arr[1]);}
       34: if Length(arr) > 2 then
           Browser.MainFrame.ExecuteJavaScript(arr[0], arr[1], arr[2]);
       35:
@@ -5090,11 +5097,12 @@ begin
         else
           ZendVar.AsString := UserStyleSheetLocation;
       end;
+{ vG TEMP COMMENT
       38:
       begin
         if Browser.MainFrame <> nil then
           ZendVar.AsString := Browser.MainFrame.Source;
-      end;
+      end;       }
       39:
       begin
         if Browser.MainFrame <> nil then
@@ -5117,20 +5125,21 @@ begin
   with TChromium(ToObj(Parameters, 0)) do
   begin
     case Parameters[1].ZendVariable.AsInteger of
+{ vG TEMP COMMENT
       1: if isGet then
           ReturnValue := Browser.ZoomLevel
         else
           Browser.ZoomLevel := Parameters[2].ZendVariable.AsFloat;
-
+                 }
       2: if isGet then
         else
           ZendVar.AsString := Browser.MainFrame.Url;
-
+{ vG TEMP COMMENT
       3: if isGet then
           ZendVar.AsString := Browser.MainFrame.Source;
 
       4: if isGet then
-          ZendVar.AsString := Browser.MainFrame.Text
+          ZendVar.AsString := Browser.MainFrame.Text }
     end;
   end;
 {$ENDIF}

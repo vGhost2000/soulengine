@@ -131,7 +131,7 @@ type
       const parentBrowser: ICefBrowser; var popupFeatures: TCefPopupFeatures;
       var windowInfo: TCefWindowInfo; var url: ustring;
       var client: ICefBase; out Result: boolean);
-
+{ vG TEMP COMMENT
     procedure OnChromiumBeforeMenu(Sender: TObject; const browser: ICefBrowser;
       const menuInfo: PCefHandlerMenuInfo; out Result: boolean);
 
@@ -139,7 +139,7 @@ type
       const browser: ICefBrowser; const frame: ICefFrame;
       const request: ICefRequest; navType: TCefHandlerNavtype;
       isRedirect: boolean; out Result: boolean);
-
+}
     procedure OnAuthCredentials(Sender: TObject; const browser: ICefBrowser;
       isProxy: boolean; Port: integer; const host, realm, scheme: ustring;
       var username, password: ustring; out Result: boolean);
@@ -159,10 +159,10 @@ type
       const frame: ICefFrame; errorCode: TCefHandlerErrorcode;
       const failedUrl: ustring; var errorText: ustring;
       out Result: boolean);
-
+{ vG TEMP COMMENT
     procedure OnStatusMessage(Sender: TObject; const browser: ICefBrowser;
       const Value: ustring; StatusType: TCefHandlerStatusType; out Result: boolean);
-
+}
     procedure OnAddressChange(Sender: TObject; const browser: ICefBrowser;
       const frame: ICefFrame; const url: ustring);
 
@@ -886,8 +886,10 @@ begin
 
    {$IFDEF ADD_CHROMIUM}
   EventAddNewType('OnBeforePopup', @THandlerFuncs.onChromiumBeforePopup, TChromium);
+{ vG TEMP COMMENT
   EventAddNewType('OnBeforeBrowse', @THandlerFuncs.onChromiumBeforeBrowse, TChromium);
   EventAddNewType('OnBeforeMenu', @THandlerFuncs.OnChromiumBeforeMenu, TChromium);
+}
 
   EventAddNewType('OnAuthCredentials', @THandlerFuncs.OnAuthCredentials, TChromium);
   EventAddNewType('OnGetDownloadHandler', @THandlerFuncs.OnGetDownloadHandler,
@@ -898,7 +900,9 @@ begin
   EventAddNewType('OnLoadEnd', @THandlerFuncs.OnLoadEnd, TChromium);
   EventAddNewType('OnLoadError', @THandlerFuncs.OnLoadError, TChromium);
 
+{ vG TEMP COMMENT
   EventAddNewType('OnStatusMessage', @THandlerFuncs.OnStatusMessage, TChromium);
+  }
 
   EventAddNewType('OnAddressChange', @THandlerFuncs.OnAddressChange, TChromium);
   EventAddNewType('OnTitleChange', @THandlerFuncs.OnTitleChange, TChromium);
@@ -1916,6 +1920,7 @@ begin
   end;
 end;
 
+{ vG TEMP COMMENT
 procedure THandlerFuncs.OnChromiumBeforeMenu(Sender: TObject;
   const browser: ICefBrowser; const menuInfo: PCefHandlerMenuInfo;
   out Result: boolean);
@@ -1936,6 +1941,7 @@ begin
   end;
 end;
 
+
 procedure THandlerFuncs.onChromiumBeforeBrowse(Sender: TCustomChromium;
   const browser: ICefBrowser; const frame: ICefFrame;
   const request: ICefRequest; navType: TCefHandlerNavtype;
@@ -1952,7 +1958,7 @@ begin
     H.ClearArgs;
   end;
 end;
-
+}
 
 
 procedure THandlerFuncs.OnAuthCredentials(Sender: TObject;
@@ -2047,6 +2053,7 @@ begin
   end;
 end;
 
+{ vG TEMP COMMENT
 procedure THandlerFuncs.OnStatusMessage(Sender: TObject;
   const browser: ICefBrowser; const Value: ustring; StatusType: TCefHandlerStatusType;
   out Result: boolean);
@@ -2062,6 +2069,7 @@ begin
     H.ClearArgs;
   end;
 end;
+}
 
 procedure THandlerFuncs.OnAddressChange(Sender: TObject;
   const browser: ICefBrowser; const frame: ICefFrame; const url: ustring);

@@ -66,13 +66,16 @@ begin
   CefProductVersion := Z_STRVAL(p[2]^);
   CefLocale := Z_STRVAL(p[3]^);
   CefLogFile := Z_STRVAL(p[4]^);
+{ vG TEMP COMMENT
   CefExtraPluginPaths := Z_STRVAL(p[5]^);
+}
   CefLocalStorageQuota := Z_LVAL(p[6]^);
   CefSessionStorageQuota := Z_LVAL(p[7]^);
 
   CefJavaScriptFlags := Z_STRVAL(p[8]^);
+{
   CefAutoDetectProxySettings := Z_BVAL(p[9]^);
-
+}
   dispose_pzval_array(p);
 end;
 
@@ -145,6 +148,7 @@ end;
 
 function ZVAL_V8(arg: pzval): ICefv8Value;
 begin
+{ vG TEMP COMMENT
   case arg._type of
     IS_LONG: Result := TCefv8ValueRef.CreateInt(arg.Value.lval);
     IS_DOUBLE: Result := TCefv8ValueRef.CreateDouble(arg.Value.dval);
@@ -153,6 +157,7 @@ begin
     else
       Result := TCefv8ValueRef.CreateNull;
   end;
+  }
 end;
 
 function TExtension.Execute(const Name: ustring; const obj: ICefv8Value;
@@ -242,7 +247,8 @@ begin
   PHPEngine.AddFunction('chromium_load', @chromium_load);
   PHPEngine.AddFunction('chromium_allowedcall', @chromium_allowedcall);
 
-  CefLoadLibAfter := callback_CefLoadLib;
+{ vG TEMP COMMENT
+  CefLoadLibAfter := callback_CefLoadLib; }
 end;
 
 
