@@ -48,3 +48,6 @@ dd.php
 tmp
 php_err.log
 start.php
+avcodec-54.dll
+avformat-54.dll
+ffmpegsumo.dll

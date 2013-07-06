@@ -171,8 +171,44 @@ class myModules
 	    }
 	}
     }
-    
-    
+
+
+	/*
+	*	Метод копирует необходимые DLL'ки от которых зависят некоторые php классы и сам SE, в папку с проектом
+	*	(например хромиум не будет работать без libcef.dll и других)
+	*
+	*	@return void
+	*/
+	public static function copyDlls($prj_dir)
+	{
+		$forms = myProject::getFormsObjects();
+
+		$modules = array();
+		foreach ($forms as $objs) {
+			foreach ($objs as $el) {
+				$class = BlockData::getItem($GLOBALS['_components'], $el['CLASS'], 'CLASS');
+				if (!empty($class['DLLS']) && is_array($class['DLLS'])) {
+					foreach ($class['DLLS'] as $file) {
+						$file_path = DOC_ROOT . $file;
+						if (is_file($file_path)) {
+							x_copy($file_path, $prj_dir . '/' . $file, true);
+						} elseif (is_dir($file_path)) {
+							foreach (findFilesV2($file_path) as $in_dir) {
+								if (!is_file($file_path . '/' . $in_dir)) {
+									continue;
+								}
+								x_copy($file_path . '/' . $in_dir, $prj_dir . '/' . $file . '/'. $in_dir, true);
+							}
+						} else {
+							throw new Exception('Module dll file not exists ' . $file_path);
+						}
+					}
+				}
+			}
+		}
+	}
+
+
 	/*
 	*	Метод очищает папку проекта от убранных из настроек проекта расширений пхп, а также от зидущих с ними зависимых дополнительных dll'ок
 	*

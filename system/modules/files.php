@@ -1,4 +1,4 @@
-<?
+<?php
 
 
 class Data {
@@ -120,24 +120,27 @@ function dir_create($dir){
     mkdir($dir, 0777, true);
 }
 
-function dir_copy($dir, $to){
-    
-    dir_create($to);
-    $to = replaceSl($to);
-    $dir = replaceSl($dir);
-    
-    $result = array();
-    if (!is_dir($dir)) return false;
-    
-    $files = findFiles($dir, null, true, true);
-    foreach ($files as $file){
-        
-        $result[] = str_ireplace($dir,'',$file);
-        file_copy($file, $to .'/'. str_replace($dir,'',$file));
-    }
-    
-    return $result;
+
+function dir_copy($dir, $to)
+{
+	dir_create($to);
+	$to  = replaceSl($to);
+	$dir = replaceSl($dir);
+
+	$result = array();
+	if (!is_dir($dir)) {
+		return false;
+	}
+
+	$files = findFilesV2($dir, null, true, true);
+	foreach ($files as $file) {
+		$result[] = str_ireplace($dir, '', $file);
+		file_copy($file, $to .'/'. str_replace($dir,'',$file));
+	}
+
+	return $result;
 }
+
 
 function dir_move($dir, $to){
     
@@ -145,7 +148,7 @@ function dir_move($dir, $to){
     dir_delete($dir);
 }
 
-// ïðîâåðêà âåðñèé 1.x.x.x, åñëè ïåðâàÿ âåðñèÿ áîëüøå ïåðâîé òî 1
+// Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ° Ð²ÐµÑ€ÑÐ¸Ð¹ 1.x.x.x, ÐµÑÐ»Ð¸ Ð¿ÐµÑ€Ð²Ð°Ñ Ð²ÐµÑ€ÑÐ¸Ñ Ð±Ð¾Ð»ÑŒÑˆÐµ Ð¿ÐµÑ€Ð²Ð¾Ð¹ Ñ‚Ð¾ 1
 function compareVer($ver1, $ver2){
     
     if ($ver1==$ver2) return 0;

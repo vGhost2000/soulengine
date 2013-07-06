@@ -11,7 +11,14 @@ $result['W'] = 40;
 $result['H'] = 30;
 $result['USE_SKIN'] = true;
 
-$result['DLLS'] = array('avcodec-53.dll', 'avformat-53.dll', 'avutil-51.dll', 'd3dcompiler_43.dll', 'd3dx9_43.dll', 'icudt.dll', 
-	    'libcef.dll', 'libEGL.dll', 'libGLESv2.dll', 'chrome.pak', 'locales');
+$result['DLLS'] = array('avcodec-54.dll', 'avformat-54.dll', 'avutil-51.dll', 'd3dcompiler_43.dll', 'd3dx9_43.dll', 'icudt.dll', 
+	    'libcef.dll', 'libEGL.dll', 'libGLESv2.dll', 'locales', 'ffmpegsumo.dll');
 
 return $result;
+
+
+/*
+cef.pak
+cefclient.drc
+devtools_resources.pak
+*/
