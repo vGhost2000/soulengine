@@ -42,6 +42,10 @@ type
       var Exception: ustring): boolean; override;
   end;
 
+var
+  cef_command_line: array of ustring;
+
+
 implementation
 
 var
@@ -50,32 +54,48 @@ var
 procedure chromium_settings;
 var
   p: pzval_array;
-  id: integer;
-  s: ansistring;
+  len: integer;
+  S: string;
 begin
-  if ht < 10 then
+  if ht <> 2 then
   begin
     zend_wrong_param_count(TSRMLS_DC);
     Exit;
   end;
   zend_get_parameters_my(ht, p, TSRMLS_DC);
 
+  S := LowerCase(Z_STRVAL(p[0]^));
+  if      S = 'cefcache'                  then cefcache                  := Z_STRVAL(p[1]^)
+  else if S = 'cefuseragent'              then cefuseragent              := Z_STRVAL(p[1]^)
+  else if S = 'cefproductversion'         then cefproductversion         := Z_STRVAL(p[1]^)
+  else if S = 'ceflocale'                 then ceflocale                 := Z_STRVAL(p[1]^)
+  else if S = 'ceflogfile'                then ceflogfile                := Z_STRVAL(p[1]^)
+  else if S = 'cefjavascriptflags'        then cefjavascriptflags        := Z_STRVAL(p[1]^)
+  else if S = 'cefresourcesdirpath'       then cefresourcesdirpath       := Z_STRVAL(p[1]^)
+  else if S = 'ceflocalesdirpath'         then ceflocalesdirpath         := Z_STRVAL(p[1]^)
+  else if S = 'cefbrowsersubprocesspath'  then cefbrowsersubprocesspath  := Z_STRVAL(p[1]^)
 
-  CefCache := Z_STRVAL(p[0]^);
-  CefUserAgent := Z_STRVAL(p[1]^);
-  CefProductVersion := Z_STRVAL(p[2]^);
-  CefLocale := Z_STRVAL(p[3]^);
-  CefLogFile := Z_STRVAL(p[4]^);
-{ vG TEMP COMMENT
-  CefExtraPluginPaths := Z_STRVAL(p[5]^);
-}
-  CefLocalStorageQuota := Z_LVAL(p[6]^);
-  CefSessionStorageQuota := Z_LVAL(p[7]^);
+  else if S = 'ceflocalstoragequota'      then ceflocalstoragequota      := Z_LVAL(p[1]^)
+  else if S = 'cefsessionstoragequota'    then cefsessionstoragequota    := Z_LVAL(p[1]^)
 
-  CefJavaScriptFlags := Z_STRVAL(p[8]^);
-{
-  CefAutoDetectProxySettings := Z_BVAL(p[9]^);
-}
+  else if S = 'cefremotedebuggingport'          then cefremotedebuggingport          := Z_LVAL(p[1]^)
+  else if S = 'cefuncaughtexceptionstacksize'   then cefuncaughtexceptionstacksize   := Z_LVAL(p[1]^)
+  else if S = 'cefcontextsafetyimplementation'  then cefcontextsafetyimplementation  := Z_LVAL(p[1]^)
+
+  else if S = 'cefpackloadingdisabled'      then cefpackloadingdisabled      := Z_BVAL(p[1]^)
+  else if S = 'cefsingleprocess'            then cefsingleprocess            := Z_BVAL(p[1]^)
+  else if S = 'cefcommandlineargsdisabled'  then cefcommandlineargsdisabled  := Z_BVAL(p[1]^)
+  else if S = 'cefreleasedcheck'            then cefreleasedcheck            := Z_BVAL(p[1]^)
+
+  else if S = 'command_line_argument'   then begin
+    len := Length(cef_command_line);
+    SetLength(cef_command_line, len + 1);
+    cef_command_line[len] := Z_STRVAL(p[1]^);
+  end
+
+  else zend_error(E_WARNING, Pointer('Unknown parameter: ' + LowerCase(Z_STRVAL(p[0]^))));
+
+
   dispose_pzval_array(p);
 end;
 
@@ -148,16 +168,14 @@ end;
 
 function ZVAL_V8(arg: pzval): ICefv8Value;
 begin
-{ vG TEMP COMMENT
   case arg._type of
-    IS_LONG: Result := TCefv8ValueRef.CreateInt(arg.Value.lval);
-    IS_DOUBLE: Result := TCefv8ValueRef.CreateDouble(arg.Value.dval);
-    IS_BOOL: Result := TCefv8ValueRef.CreateBool(boolean(arg.Value.lval));
-    IS_STRING: Result := TCefv8ValueRef.CreateString(Z_STRVAL(arg));
+    IS_LONG: Result := TCefv8ValueRef.NewInt(arg.Value.lval);
+    IS_DOUBLE: Result := TCefv8ValueRef.NewDouble(arg.Value.dval);
+    IS_BOOL: Result := TCefv8ValueRef.NewBool(boolean(arg.Value.lval));
+    IS_STRING: Result := TCefv8ValueRef.NewString(Z_STRVAL(arg));
     else
-      Result := TCefv8ValueRef.CreateNull;
+      Result := TCefv8ValueRef.NewNull;
   end;
-  }
 end;
 
 function TExtension.Execute(const Name: ustring; const obj: ICefv8Value;

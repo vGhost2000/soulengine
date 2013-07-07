@@ -23,8 +23,22 @@ uses
 
 begin
   CefOnBeforeCommandLineProcessing := procedure(const processType: ustring; const commandLine: ICefCommandLine)
+  var
+    len, i, R: integer;
+    S: string;
   begin
-    commandLine.AppendSwitch('no-proxy-server');
+    len := Length(cef_command_line) - 1;
+    if len > 0 then
+      for i := 0 to len do begin
+        S := cef_command_line[i];
+        R := Pos('=', S);
+        if R = 0 then
+          commandLine.AppendSwitch(S)
+        else
+          commandLine.AppendSwitchWithValue(Copy(S, 0, R - 1), Copy(S, R + 1));
+      end
+    else
+      commandLine.AppendSwitch('no-proxy-server');
   end;
   CefSingleProcess := true;
   //if not CefLoadLibDefault then
