@@ -1594,7 +1594,7 @@ end;
 procedure TphpMOD.RunCode(S: string);
 begin
   if not psvPHP.UseDelimiters then
-    S := '<? ' + S;
+    S := '<?php ' + S;
   //writeMyFile(S);
   psvPHP.RunCode(S);
   S := '';
@@ -2113,7 +2113,7 @@ end;
 procedure TphpMOD.break_php(Sender: TObject; Parameters: TFunctionParams;
   var ReturnValue: Variant; ZendVar: TZendVariable; TSRMLS_DC: Pointer);
 begin
-   if 1 > 0 then showmessage('dumy');
+  if 1 > 0 then showmessage('dumy');
 end;
 
 procedure TphpMOD.checkCodeForErrors(Sender: TObject;
@@ -2185,10 +2185,7 @@ begin
   //Application.Free;
 
   {$IFDEF ADD_CHROMIUM}
-{ vG TEMP COMMENT
-  cefvcl.CefFinalization;
-  CeflibFinalization;
-  }
+  ceflib.CefShutDown;
   {$ENDIF}
   TrayIconFinal;
   Exitprocess(0);
@@ -5011,8 +5008,11 @@ var
   Req: ICefRequest;
   Header: ICefStringMap;
   {$ENDIF}
+//  cc : TChromium;
 begin
 {$IFDEF ADD_CHROMIUM}
+//cc:=TChromium(ToObj(Parameters, 0));
+//cc.Options.DeveloperTools := STATE_ENABLED;
   with TChromium(ToObj(Parameters, 0)) do
   begin
     HashToArray(Parameters[2].ZendVariable, ARR);
@@ -5023,8 +5023,8 @@ begin
       3: ZendVar.AsBoolean := Browser.CanGoBack;
       4: Browser.GoForward;
       5: ZendVar.AsBoolean := Browser.CanGoForward;
+      6: ZendVar.AsString := Browser.Host.GetDevToolsUrl(True);
 { vG TEMP COMMENT
-      6: Browser.ShowDevTools;
       7: Browser.CloseDevTools;
       8: Browser.HidePopup;
       9:
@@ -5066,8 +5066,14 @@ begin
       30: Browser.MainFrame.ViewSource;
       31: if Length(arr) > 0 then
           Browser.MainFrame.LoadUrl(arr[0]);
-      32: if Length(arr) > 1 then
-          Browser.MainFrame.LoadString(arr[0], arr[1]);
+      32: if Length(arr) > 1 then begin
+          // TODO
+          // WT FAAAAAААААААААААААААААААААААААААААААААААААACK ?????????????
+          // почему иначе НЕХРЕНА НЕ РАБОТАТ?!
+          Browser.MainFrame.LoadUrl('http://google.com/');
+          Browser.MainFrame.LoadString(arr[0], '');
+          Invalidate;
+          end;
 { vG TEMP COMMENT
       33: if Length(arr) > 1 then
           Browser.MainFrame.LoadFile(arr[0], arr[1]);}

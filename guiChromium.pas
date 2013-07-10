@@ -1,4 +1,4 @@
-unit guiChromium;
+﻿unit guiChromium;
 
 {$ifdef fpc}
 {$mode delphi}{$H+}
@@ -7,16 +7,7 @@ unit guiChromium;
 interface
 
 uses
-  Classes, SysUtils, phpUtils, Forms, regGUI, Controls,
-  zendTypes,
-  ZENDAPI,
-  phpTypes,
-  PHPAPI,
-  php4delphi,
-  uPhpEvents,
-  uPHPMod,
-  Graphics, Dialogs, dwsHashtables,
-  ceflib, cefvcl;
+  Classes, SysUtils, zendTypes, ZENDAPI, php4delphi, uPHPMod, dwsHashtables, ceflib;
 
 procedure InitializeGuiChromium(PHPEngine: TPHPEngine);
 
@@ -33,23 +24,33 @@ procedure chromium_load(ht: integer; return_value: pzval; return_value_ptr: pzva
 
 
 type
-  TExtension = class(TCefv8HandlerOwn)
-  private
 
-  protected
-    function Execute(const Name: ustring; const obj: ICefv8Value;
-      const arguments: TCefv8ValueArray; var retval: ICefv8Value;
-      var Exception: ustring): boolean; override;
+  TPHPExtension = class(TThread)
+    class function call(const Name,arguments: ICefv8Value): string;
   end;
+
+  TCustomRenderProcessHandler = class(TCefRenderProcessHandlerOwn)
+  protected
+    procedure OnWebKitInitialized; override;
+  end;
+
 
 var
   cef_command_line: array of ustring;
 
 
-implementation
 
+implementation
 var
   AllowedCall: TStringHashTable;
+
+
+procedure chromium_load;
+begin
+  if not CefLoadLibDefault then
+    exit;
+end;
+
 
 procedure chromium_settings;
 var
@@ -135,10 +136,7 @@ begin
   dispose_pzval_array(p);
 end;
 
-procedure chromium_load;
-begin
-  CefLoadLibDefault;
-end;
+
 
 procedure V8_ZVAL(Value: ICefv8Value; arg: pzval);
 var
@@ -169,55 +167,69 @@ end;
 function ZVAL_V8(arg: pzval): ICefv8Value;
 begin
   case arg._type of
-    IS_LONG: Result := TCefv8ValueRef.NewInt(arg.Value.lval);
+    IS_LONG:   Result := TCefv8ValueRef.NewInt(arg.Value.lval);
     IS_DOUBLE: Result := TCefv8ValueRef.NewDouble(arg.Value.dval);
-    IS_BOOL: Result := TCefv8ValueRef.NewBool(boolean(arg.Value.lval));
+    IS_BOOL:   Result := TCefv8ValueRef.NewBool(boolean(arg.Value.lval));
     IS_STRING: Result := TCefv8ValueRef.NewString(Z_STRVAL(arg));
     else
       Result := TCefv8ValueRef.NewNull;
   end;
 end;
 
-function TExtension.Execute(const Name: ustring; const obj: ICefv8Value;
-  const arguments: TCefv8ValueArray; var retval: ICefv8Value;
-  var Exception: ustring): boolean;
+
+
+procedure InitializeGuiChromium(PHPEngine: TPHPEngine);
+begin
+  PHPEngine.AddFunction('chromium_settings', @chromium_settings);
+  PHPEngine.AddFunction('chromium_load', @chromium_load);
+  PHPEngine.AddFunction('chromium_allowedcall', @chromium_allowedcall);
+end;
+
+
+
+procedure TCustomRenderProcessHandler.OnWebKitInitialized;
+begin
+  TCefRTTIExtension.Register('PHP', TPHPExtension);
+end;
+
+
+
+class function TPHPExtension.call;
 var
   S: ansistring;
   Args: pzval_array_ex;
   Return, Func: pzval;
   i: integer;
 begin
-   {if name = 'eval' then
-   begin
-      if length(arguments) > 0 then
-      begin
-         phpMOD.RunCode( arguments[0].GetStringValue );
-      end;
-   end else}
-  if Name = 'call' then
-  begin
-    if length(arguments) > 0 then
+  // Проверим что вызываемая процедура находится в списке разрешённых к вызыву.
+  S := Name.GetStringValue;
+
+  if (AllowedCall.FSize = 0) or (not AllowedCall.HasKey(LowerCase(S))) then
+    exit;
+
+  Func   := MAKE_STD_ZVAL;
+  Return := MAKE_STD_ZVAL;
+  ZVAL_STRING(Func, PAnsiChar(S), True);
+
+  // если второй аргумент переданный из JS - массив
+  if arguments.IsArray then begin
+    SetLength(args, arguments.GetArrayLength);
+    for i := 0 to high(args) do
     begin
-      S := arguments[0].GetStringValue;
-      if (AllowedCall.FSize = 0) or (not AllowedCall.HasKey(LowerCase(S))) then
-      begin
-        Result := False;
-        exit;
-      end;
+      args[i] := MAKE_STD_ZVAL;
+      V8_ZVAL(arguments.GetValueByIndex(i), args[i]);
+    end;
+  end else begin
+    SetLength(args, 1);
+    args[0] := MAKE_STD_ZVAL;
+    V8_ZVAL(arguments, args[0]);
+  end;
 
-      Func := MAKE_STD_ZVAL;
-      Return := MAKE_STD_ZVAL;
-
-
-      ZVAL_STRING(Func, PAnsiChar(S), True);
-
-      SetLength(args, length(arguments) - 1);
-      for i := 0 to high(args) do
-      begin
-        args[i] := MAKE_STD_ZVAL;
-        V8_ZVAL(arguments[i + 1], args[i]);
-      end;
-
+  // хромиум теперь многопоточен и вызывает данную процедуру в потоке, а пхп у нас крутится
+  // в основном потоке, по этому нам надо вызывать php ф-ю используя синхронизацию
+  Synchronize(nil,
+    procedure
+    begin
       call_user_function(
         GetExecutorGlobals.function_table,
         nil,
@@ -226,51 +238,27 @@ begin
         Length(Args),
         Args,
         phpMOD.psvPHP.TSRMLS_D
-        );
+      );
+    end
+  );
+  Result := Z_STRVAL(Return);
 
-      for i := 0 to high(args) do
-      begin
-        _zval_dtor(args[0], nil, 0);
-      end;
-
-      retval := ZVAL_V8(Return);
-      Result := True;
-
-      _zval_dtor(Func, nil, 0);
-      _zval_dtor(Return, nil, 0);
-    end;
+  // вот это что за зверь ниже идёт я пока так и не понял
+  for i := 0 to high(args) do
+  begin
+    _zval_dtor(args[0], nil, 0);
   end;
-end;
 
-const
-  code =
-    'var PHP;' + 'if (!PHP)' + '  PHP = {};' + '(function() {' +
-  (* '  PHP.eval = function(code) {'+
-   '    native function eval(code);'+
-   '    return eval(code);'+
-   '  };'+   *)
-    '  PHP.call = function(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15) {' +
-    '    native function call(arguments);' + '    return call.apply(null, arguments);' +
-    '  };' + '})();';
-
-// after load chromium callback
-procedure callback_CefLoadLib;
-begin
-  CefRegisterExtension('v8/PHP', code, TExtension.Create as ICefV8Handler);
-end;
-
-procedure InitializeGuiChromium(PHPEngine: TPHPEngine);
-begin
-  PHPEngine.AddFunction('chromium_settings', @chromium_settings);
-  PHPEngine.AddFunction('chromium_load', @chromium_load);
-  PHPEngine.AddFunction('chromium_allowedcall', @chromium_allowedcall);
-
-{ vG TEMP COMMENT
-  CefLoadLibAfter := callback_CefLoadLib; }
+  _zval_dtor(Func, nil, 0);
+  _zval_dtor(Return, nil, 0);
 end;
 
 
 initialization
   AllowedCall := TStringHashTable.Create(256);
+
+  CefRenderProcessHandler := TCustomRenderProcessHandler.Create;
+//  CefBrowserProcessHandler := TCefBrowserProcessHandlerOwn.Create;
+
 
 end.

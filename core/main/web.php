@@ -72,7 +72,7 @@ class TChromium extends TControl {
 	}
 	
 	public function showDevTools(){
-		chromium_exec($this->self, CHROMIUM_EXEC_SHOWDEVTOOLS, 0);
+		return chromium_exec($this->self, CHROMIUM_EXEC_SHOWDEVTOOLS, 0);
 	}
 	
 	public function hideDevTools(){

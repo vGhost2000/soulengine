@@ -16,12 +16,15 @@ uses
   Vcl.Styles,
   uPhpEvents in 'uPhpEvents.pas',
   core in 'core.pas',
-  guiChromium in 'guiChromium.pas';
+  guiChromium in 'guiChromium.pas',
+  guiForms in 'guiForms.pas';
 
 {$R *.res}
 
 
 begin
+  Application.Initialize;
+
   CefOnBeforeCommandLineProcessing := procedure(const processType: ustring; const commandLine: ICefCommandLine)
   var
     len, i, R: integer;
@@ -53,8 +56,6 @@ begin
   if not CefLoadLibDefault then
     exit;
   }
-
-  Application.Initialize;
 
   Application.MainFormOnTaskBar := false;
   Application.ShowMainForm      := false;
