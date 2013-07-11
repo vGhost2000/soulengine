@@ -10,7 +10,7 @@ uses
   ComCtrls, Controls, Windows, FileCtrl, Buttons, SizeControl, ExtCtrls, Menus,
   StdCtrls, ShellApi, RyMenus, CheckLst, TlHelp32, Utils, Messages, MImage,
   Vcl.Imaging.GIFImg, Vcl.Imaging.Jpeg, Vcl.Imaging.PNGImage, Grids, CaptionedDockTree1,
-  Clipbrd, Vcl.Themes,
+  Clipbrd, Vcl.Themes, System.DateUtils,
   {$IFDEF MSWINDOWS}
   ActiveX, ShlObj,
   {$ENDIF}
@@ -4984,6 +4984,9 @@ end;
 *   Метод получаем исходный код странички окна браузера через callback процедуру
 *   и возвращает исходный код после завершения
 *
+*   @TODO со временем ГОВНОхак, подумать как определить что callback вызван НЕ БУДЕТ
+*
+*
 *   @param  ICefFrame объект фрейма браузера исходный код странички которого надо получить
 *   @param  boolean   true - возвращать html иначе text
 *
@@ -4994,8 +4997,11 @@ var
   SRC: ustring;
   wait_src: boolean;
   proc: TCefStringVisitorProc;
+  i: integer;
 begin
   wait_src := true;
+  SRC      := '';
+  i        := DateTimeToUnix(now());
   if MainFrame <> nil then begin
     proc := procedure(const source: ustring) begin
       SRC      := source;
@@ -5005,7 +5011,7 @@ begin
     if is_html then MainFrame.GetSourceProc(proc)
     else            MainFrame.GetTextProc(proc);
 
-    while wait_src do
+    while wait_src and (DateTimeToUnix(now()) - i < 2) do
       APPLICATION.ProcessMessages;
     Result := SRC;
   end;
