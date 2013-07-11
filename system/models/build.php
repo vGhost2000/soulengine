@@ -62,7 +62,7 @@ final class CodeBuilder
 		$this->chars      = rand(5, 10);
 		$this->sint       = crc32(substr($se_key, $this->start, $this->chars));
 		$this->form       = $cform;
-		$this->code       = '<' . "?php\n\n" . $this->_getSecurityCode() . "\n\n final CLASS TForm" . $cform . " EXTENDS vGObjectForm\n{\n";
+		$this->code       = '<' . "?php\n\n" . $this->_getSecurityCode() . "\n\n if(1 == 1){ final CLASS TForm" . $cform . " EXTENDS vGObjectForm\n{\n";
 		$this->code      .= 'static $SelfObj = False;' . "\n";
 		$this->code      .= '
 			Protected	$___MustBeObj	= Array(
@@ -245,7 +245,7 @@ final class CodeBuilder
 		foreach ($this->events as $event => $components) {
 			$this->code .= "'" . $event . "' => array('" . implode("', '", $components) . "'),\n";
 		}
-		$this->code .= ");\n}\n";
+		$this->code .= ");\n}}\n";
 
 		if (vGDEBUG) {
 			global $projectFile;
