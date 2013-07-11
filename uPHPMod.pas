@@ -5,41 +5,21 @@
 interface
 
 uses
-  SysUtils, Classes, TypInfo,
-  PHPCustomLibrary,
-  phpLibrary,
-  PHPCommon,
-  php4delphi,
-  ZendTypes,
-  ZendAPI,
-  PHPTypes,
-  PHPAPI,
-  DelphiFunctions,
-  PHPFunctions,
-  coolTrayIcon, libSysTray,
-  Graphics, Dialogs, Forms, Variants, uGuiScreen, ComCtrls,
-  Controls, Windows, FileCtrl, Buttons, SizeControl, ExtCtrls, Menus,
-  StdCtrls, ShellApi, RyMenus, CheckLst, TlHelp32, Utils,
-  Messages, MImage, Vcl.Imaging.GIFImg, Jpeg, Grids, CaptionedDockTree1, Clipbrd,
-                                     //GifImage
-  WideStrUtils,
-  Vcl.Themes,
-  Vcl.Styles,
+  SysUtils, Classes, TypInfo, phpLibrary, PHPCommon, php4delphi, ZendTypes, ZendAPI,
+  PHPFunctions, coolTrayIcon, libSysTray, Graphics, Dialogs, Forms, Variants,
+  ComCtrls, Controls, Windows, FileCtrl, Buttons, SizeControl, ExtCtrls, Menus,
+  StdCtrls, ShellApi, RyMenus, CheckLst, TlHelp32, Utils, Messages, MImage,
+  Vcl.Imaging.GIFImg, Vcl.Imaging.Jpeg, Vcl.Imaging.PNGImage, Grids, CaptionedDockTree1,
+  Clipbrd, Vcl.Themes,
   {$IFDEF MSWINDOWS}
-  ActiveX, ShlObj, WinInet,
+  ActiveX, ShlObj,
   {$ENDIF}
-
-  regGui, uApplication, Registry, PNGImage
-
-
+  Registry, PHPCustomLibrary
   {$IFDEF ADD_CHROMIUM}
   , ceflib, cefvcl
   {$ENDIF}
-
   {$IFDEF VS_EDITOR}
-  , NxPropertyItems, NxPropertyItemClasses, NxScrollControl,
-  NxInspector,
-  SynCompletionProposal, SynEdit, SynEditHighlighter
+  , NxPropertyItems, SynCompletionProposal, SynEdit, SynEditHighlighter
   {$ENDIF}  ;
 
 procedure addVar(aName, aValue: variant; PSV: TpsvPHP = nil);
@@ -1119,7 +1099,7 @@ type
     procedure _ChromiumFunctions0Execute(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
-    procedure _ChromiumFunctions1Execute(Sender: TObject;
+    procedure chromium_exec2(Sender: TObject;
       Parameters: TFunctionParams; var ReturnValue: variant;
       ZendVar: TZendVariable; TSRMLS_DC: Pointer);
     procedure _TPictureLibFunctions26Execute(Sender: TObject;
@@ -4999,6 +4979,39 @@ begin
     Parameters[3].VValue);
 end;
 
+
+{*
+*   Метод получаем исходный код странички окна браузера через callback процедуру
+*   и возвращает исходный код после завершения
+*
+*   @param  ICefFrame объект фрейма браузера исходный код странички которого надо получить
+*   @param  boolean   true - возвращать html иначе text
+*
+*   @return ustring   исходный код странички
+*}
+function getBrowserFrameSourceCode(MainFrame: ICefFrame; is_html: boolean): ustring;
+var
+  SRC: ustring;
+  wait_src: boolean;
+  proc: TCefStringVisitorProc;
+begin
+  wait_src := true;
+  if MainFrame <> nil then begin
+    proc := procedure(const source: ustring) begin
+      SRC      := source;
+      wait_src := false;
+    end;
+
+    if is_html then MainFrame.GetSourceProc(proc)
+    else            MainFrame.GetTextProc(proc);
+
+    while wait_src do
+      APPLICATION.ProcessMessages;
+    Result := SRC;
+  end;
+end;
+
+
 procedure TphpMOD._ChromiumFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
@@ -5007,12 +5020,32 @@ var
   {$IFDEF ADD_CHROMIUM}
   Req: ICefRequest;
   Header: ICefStringMap;
+  event: TCefKeyEvent;
+  mevent: TCefMouseEvent;
   {$ENDIF}
-//  cc : TChromium;
+  //cc : TChromium;
+
+  function getEventFlag(flags :integer): TCefEventFlags;
+  begin
+    if flags and 1 > 0    then Result := Result + [EVENTFLAG_CAPS_LOCK_ON];
+    if flags and 2 > 0    then Result := Result + [EVENTFLAG_SHIFT_DOWN];
+    if flags and 4 > 0    then Result := Result + [EVENTFLAG_CONTROL_DOWN];
+    if flags and 8 > 0    then Result := Result + [EVENTFLAG_ALT_DOWN];
+    if flags and 16 > 0   then Result := Result + [EVENTFLAG_LEFT_MOUSE_BUTTON];
+    if flags and 32 > 0   then Result := Result + [EVENTFLAG_MIDDLE_MOUSE_BUTTON];
+    if flags and 64 > 0   then Result := Result + [EVENTFLAG_RIGHT_MOUSE_BUTTON];
+    // Mac OS-X command key.
+    if flags and 128 > 0  then Result := Result + [EVENTFLAG_COMMAND_DOWN];
+    if flags and 256 > 0  then Result := Result + [EVENTFLAG_NUM_LOCK_ON];
+    if flags and 512 > 0  then Result := Result + [EVENTFLAG_IS_KEY_PAD];
+    if flags and 1024 > 0 then Result := Result + [EVENTFLAG_IS_LEFT];
+    if flags and 2048 > 0 then Result := Result + [EVENTFLAG_IS_RIGHT];
+  end;
 begin
 {$IFDEF ADD_CHROMIUM}
 //cc:=TChromium(ToObj(Parameters, 0));
 //cc.Options.DeveloperTools := STATE_ENABLED;
+
   with TChromium(ToObj(Parameters, 0)) do
   begin
     HashToArray(Parameters[2].ZendVariable, ARR);
@@ -5024,32 +5057,39 @@ begin
       4: Browser.GoForward;
       5: ZendVar.AsBoolean := Browser.CanGoForward;
       6: ZendVar.AsString := Browser.Host.GetDevToolsUrl(True);
-{ vG TEMP COMMENT
-      7: Browser.CloseDevTools;
-      8: Browser.HidePopup;
+      7: ; //Browser.CloseDevTools;  УСТАРЕЛО и более не требуется
+      8: ; // Browser.HidePopup;      УСТАРЕЛО теперь есть событие OnBeforePopup
       9:
       begin
         if Length(ARR) > 0 then
-          Browser.SetFocus(ARR[0])
+          Browser.Host.SetFocus(ARR[0])
         else
-          Browser.SetFocus(True);
-      end;                     }
+          Browser.Host.SetFocus(True)
+      end;
       10: Browser.ReloadIgnoreCache;
       11: Browser.StopLoad;
-{ vG TEMP COMMENT
       12: if Length(Arr) > 0 then
-          Browser.SendFocusEvent(arr[0]);
-      13: if Length(Arr) > 4 then
-          Browser.SendKeyEvent(TCefKeyType(arr[0]), arr[1], arr[2], arr[3], arr[4]);
-      14: if Length(Arr) > 4 then
-          Browser.SendMouseClickEvent(arr[0], arr[1],
-            TCefMouseButtonType(arr[2]), arr[3], arr[4]);                           }
+          Browser.Host.SendFocusEvent(arr[0]);
+      13: if Length(Arr) > 4 then begin
+            FillChar(event, SizeOf(event), 0);
+            event.kind := arr[0];
+            event.modifiers := getEventFlag(arr[2]);
+            event.windows_key_code := arr[1];
+            Browser.Host.SendKeyEvent(@event);
+            //array( (int)$type, (int)$key, (int)$modifers, (int)$sysChar, (int)$imeChar ));
+            //Browser.SendKeyEvent(TCefKeyType(arr[0]), arr[1], arr[2], arr[3], arr[4]);
+          end;
+      14: if Length(Arr) > 4 then begin
+            mevent.x := arr[0];
+            mevent.y := arr[1];
+            Browser.Host.SendMouseClickEvent(@mevent, TCefMouseButtonType(arr[2]), arr[3], arr[4]);
+            //sendMouseClickEvent($x, $y, $type, $mouseUp, $clickCount)
+          end;
       15: if Length(arr) > 0 then
           Load(arr[0]);
       16: if Length(arr) > 1 then
           ScrollBy(arr[0], arr[1]);
-{ vG TEMP COMMENT
-      17: Browser.ClearHistory; }
+      17: ; //Browser.ClearHistory;  УСТАРЕЛО данный метод не существует в cef3
       18: ;
       19: ;
       20: ;
@@ -5061,8 +5101,7 @@ begin
       26: Browser.MainFrame.Paste;
       27: Browser.MainFrame.Del;
       28: Browser.MainFrame.SelectAll;
-{ vG TEMP COMMENT
-      29: Browser.MainFrame.Print; }
+      29: ; //Browser.Host.Browser .Print; Поддержка принтера в многопоточном хромиуме временно отключена
       30: Browser.MainFrame.ViewSource;
       31: if Length(arr) > 0 then
           Browser.MainFrame.LoadUrl(arr[0]);
@@ -5071,11 +5110,9 @@ begin
           // WT FAAAAAААААААААААААААААААААААААААААААААААААACK ?????????????
           // почему иначе НЕХРЕНА НЕ РАБОТАТ?!
           Browser.MainFrame.LoadUrl('http://google.com/');
-          Browser.MainFrame.LoadString(arr[0], '');
-          Invalidate;
+          Browser.MainFrame.LoadString(arr[0], arr[1]);
           end;
-{ vG TEMP COMMENT
-      33: if Length(arr) > 1 then
+      33: ;{if Length(arr) > 1 then  УСТАРЕЛО, надо использовать LoadString
           Browser.MainFrame.LoadFile(arr[0], arr[1]);}
       34: if Length(arr) > 2 then
           Browser.MainFrame.ExecuteJavaScript(arr[0], arr[1], arr[2]);
@@ -5103,16 +5140,10 @@ begin
         else
           ZendVar.AsString := UserStyleSheetLocation;
       end;
-{ vG TEMP COMMENT
-      38:
-      begin
-        if Browser.MainFrame <> nil then
-          ZendVar.AsString := Browser.MainFrame.Source;
-      end;       }
+      38: ZendVar.AsString := getBrowserFrameSourceCode(Browser.MainFrame, true);
       39:
       begin
         if Browser.MainFrame <> nil then
-
           zendVar.AsString := Browser.MainFrame.Url;
       end;
     end;
@@ -5120,7 +5151,9 @@ begin
 {$ENDIF}
 end;
 
-procedure TphpMOD._ChromiumFunctions1Execute(Sender: TObject;
+
+
+procedure TphpMOD.chromium_exec2(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;
   TSRMLS_DC: Pointer);
 var
@@ -5131,25 +5164,24 @@ begin
   with TChromium(ToObj(Parameters, 0)) do
   begin
     case Parameters[1].ZendVariable.AsInteger of
-{ vG TEMP COMMENT
       1: if isGet then
-          ReturnValue := Browser.ZoomLevel
+          ReturnValue := Browser.Host.ZoomLevel
         else
-          Browser.ZoomLevel := Parameters[2].ZendVariable.AsFloat;
-                 }
+          Browser.Host.ZoomLevel := Parameters[2].ZendVariable.AsFloat;
       2: if isGet then
+          ZendVar.AsString := Browser.MainFrame.Url
         else
-          ZendVar.AsString := Browser.MainFrame.Url;
-{ vG TEMP COMMENT
+          Browser.MainFrame.LoadUrl(Parameters[2].ZendVariable.AsString);
       3: if isGet then
-          ZendVar.AsString := Browser.MainFrame.Source;
-
+          ZendVar.AsString := getBrowserFrameSourceCode(Browser.MainFrame, true);
       4: if isGet then
-          ZendVar.AsString := Browser.MainFrame.Text }
+          ZendVar.AsString := getBrowserFrameSourceCode(Browser.MainFrame, false);
     end;
   end;
 {$ENDIF}
 end;
+
+
 
 procedure TphpMOD._DockingFunctions0Execute(Sender: TObject;
   Parameters: TFunctionParams; var ReturnValue: variant; ZendVar: TZendVariable;

@@ -1,4 +1,4 @@
-<?
+<?php
 
 global $_c;
 $_c->CHROMIUM_EXEC_RELOAD = 1;
@@ -38,18 +38,45 @@ $_c->CHROMIUM_EXEC_DEFCSSPATH = 36;
 $_c->CHROMIUM_EXEC_SOURCE = 38;
 $_c->CHROMIUM_EXEC_ADDRESS = 39;
 
+$_c->MBT_LEFT   = 0;
+$_c->MBT_MIDDLE = 1;
+$_c->MBT_RIGHT  = 2;
+
+$_c->EVENTFLAG_CAPS_LOCK_ON        = 1;
+$_c->EVENTFLAG_SHIFT_DOWN          = 2;
+$_c->EVENTFLAG_CONTROL_DOWN        = 4;
+$_c->EVENTFLAG_ALT_DOWN            = 8;
+$_c->EVENTFLAG_LEFT_MOUSE_BUTTON   = 16;
+$_c->EVENTFLAG_MIDDLE_MOUSE_BUTTON = 32;
+$_c->EVENTFLAG_RIGHT_MOUSE_BUTTON  = 64;
+$_c->EVENTFLAG_COMMAND_DOWN        = 128;
+$_c->EVENTFLAG_NUM_LOCK_ON         = 256;
+$_c->EVENTFLAG_IS_KEY_PAD          = 512;
+$_c->EVENTFLAG_IS_LEFT             = 1024;
+$_c->EVENTFLAG_IS_RIGHT            = 2048;
+
+
 class TChromiumOptions extends TControl{
     
 }
 
 class TChromium extends TControl {
+/*
+
+chromium_exec2()
+param int self
+param int 
+		1 - ZoomLevel
+		2 - url
+		3 - src html
+		4 - src text
+param if null - get else set
+
+*/
     
     public $class_name = __CLASS__;
     public $_options;
     
-	public function free(){
-		chromium_free($this->self);
-	}
 	
 	public function reload(){
 		chromium_exec($this->self, CHROMIUM_EXEC_RELOAD, 0);
@@ -171,7 +198,8 @@ class TChromium extends TControl {
 	}
 	
 	public function loadFile($file, $url = 'about:blank'){
-		chromium_exec($this->self, CHROMIUM_EXEC_LOADFILE, array((string)$file, (string)$url));
+		$this->LoadString(file_get_contents($file), $url);
+		//chromium_exec($this->self, CHROMIUM_EXEC_LOADFILE, array((string)$file, (string)$url));
 	}
 	
 	public function executeJs($js, $jsUrl = 'about:blank', $startLine = 0){

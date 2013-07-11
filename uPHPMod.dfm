@@ -5036,14 +5036,14 @@ object phpMOD: TphpMOD
         OnExecute = _ChromiumFunctions0Execute
       end
       item
-        FunctionName = 'chromium_free'
+        FunctionName = 'chromium_exec2'
         Tag = 0
         Parameters = <
           item
             Name = 'Param1'
             ParamType = tpUnknown
           end>
-        OnExecute = _ChromiumFunctions1Execute
+        OnExecute = chromium_exec2
       end
       item
         FunctionName = 'chromium_prop'
