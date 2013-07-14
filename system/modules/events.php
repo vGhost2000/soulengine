@@ -796,13 +796,13 @@ DSApi::reg_eventParams('OnGetDownloadHandler',
 DSApi::reg_eventParams('OnConsoleMessage',
     array('message', 'source', 'line', '&continue'));
 
-DSApi::reg_eventParams('OnLoadStart',array());
+DSApi::reg_eventParams('OnLoadStart',array('self', 'url', '&continue'));
 DSApi::reg_eventParams('OnLoadEnd',array('httpStatus', '&continue'));
 DSApi::reg_eventParams('OnLoadError',array('errorCode', 'failedUrl', 'errorText', '&continue'));
 DSApi::reg_eventParams('OnStatusMessage',array('value', 'status', '&continue'));
 
-DSApi::reg_eventParams('OnAddressChange',array('url'));
-DSApi::reg_eventParams('OnTitleChange',array('title', '&continue'));
+DSApi::reg_eventParams('OnAddressChange',array('self', 'url'));
+DSApi::reg_eventParams('OnTitleChange',array('self', 'title'));
 DSApi::reg_eventParams('OnTooltip',array('text', '&continue'));
 
 DSApi::reg_eventParams('OnContentsSizeChange',array('width', 'height'));

@@ -153,8 +153,7 @@ type
 
     procedure OnLoadStart(Sender: TObject; const browser: ICefBrowser;
       const frame: ICefFrame);
-    procedure OnLoadEnd(Sender: TObject; const browser: ICefBrowser;
-      const frame: ICefFrame; httpStatusCode: integer; out Result: boolean);
+    procedure OnLoadEnd(Sender: TObject; const browser: ICefBrowser; const frame: ICefFrame; httpStatusCode: Integer);
     procedure OnLoadError(Sender: TObject; const browser: ICefBrowser;
       const frame: ICefFrame; errorCode: TCefHandlerErrorcode;
       const failedUrl: ustring; var errorText: ustring;
@@ -167,7 +166,7 @@ type
       const frame: ICefFrame; const url: ustring);
 
     procedure OnTitleChange(Sender: TObject; const browser: ICefBrowser;
-      const title: ustring; out Result: boolean);
+      const title: ustring);
 
     procedure OnTooltip(Sender: TObject; const browser: ICefBrowser;
       var Text: ustring; out Result: boolean);
@@ -1283,13 +1282,22 @@ begin
     end;
 
     case Args[i - 1].VType of
-      vtInteger: ZVAL_LONG(Self.Args[i], Args[i - 1].VInteger);
-      vtPointer, vtObject: ZVAL_LONG(Self.Args[i], integer(Args[i - 1].VPointer));
-      vtInt64: ZVAL_DOUBLE(Self.Args[i], Args[i - 1].VInt64^);
-      vtExtended: ZVAL_DOUBLE(Self.Args[i], Args[i - 1].VExtended^);
-      vtBoolean: ZVAL_BOOL(Self.Args[i], Args[i - 1].VBoolean);
-      vtString: ZVAL_STRINGL(Self.Args[i], @(Args[i - 1].VString^[0]),
-          Length(Args[i - 1].VString^), True);
+      {      А ещё есть и вот такие но пока не как не обрабатываются
+            vtPChar:
+            vtClass:
+            vtWideChar:
+            vtPWideChar:
+            vtVariant:
+            vtInterface: }
+      vtInteger:            ZVAL_LONG(Self.Args[i], Args[i - 1].VInteger);
+      vtPointer, vtObject:  ZVAL_LONG(Self.Args[i], integer(Args[i - 1].VPointer));
+      vtInt64:              ZVAL_DOUBLE(Self.Args[i], Args[i - 1].VInt64^);
+      vtExtended:           ZVAL_DOUBLE(Self.Args[i], Args[i - 1].VExtended^);
+      vtBoolean:            ZVAL_BOOL(Self.Args[i], Args[i - 1].VBoolean);
+      vtString:             ZVAL_STRINGL(
+                              Self.Args[i], @(Args[i - 1].VString^[0]),
+                              Length(Args[i - 1].VString^), True
+                            );
       vtAnsiString:
       begin
         if Args[i - 1].VAnsiString = nil then
@@ -1299,6 +1307,13 @@ begin
             PAnsiChar(Args[i - 1].VAnsiString),
             Length(ansistring(Args[i - 1].VAnsiString)),
             True);
+      end;
+      vtUnicodeString:
+      begin
+        if Args[i - 1].VUnicodeString = nil then
+          ZVAL_EMPTY_STRING(Self.Args[i])
+        else
+            ZVAL_STRINGW(Self.Args[i], Args[i - 1].VPWideChar, true);
       end;
       vtWideString:
       begin
@@ -2015,23 +2030,23 @@ end;
 
 procedure THandlerFuncs.OnLoadStart(Sender: TObject; const browser: ICefBrowser;
   const frame: ICefFrame);
-begin
-  EventRun(Sender, 'OnLoadStart');
-end;
-
-procedure THandlerFuncs.OnLoadEnd(Sender: TObject; const browser: ICefBrowser;
-  const frame: ICefFrame; httpStatusCode: integer; out Result: boolean);
 var
   H: TPHPScriptEventHandler;
+  Result: boolean;
 begin
-  Result := True;
-
-  H := EventRun(Sender, 'OnLoadEnd', [httpStatusCode, Result], False);
-  if H <> nil then
-  begin
-    Result := not H.ParamBool(2);
+  Result := true;
+  H := EventRun(Sender, 'OnLoadStart', [frame.Url, Result], false);
+  if H <> nil then begin
+    if not H.ParamBool(2) then
+      browser.StopLoad;
     H.ClearArgs;
   end;
+end;
+
+
+procedure THandlerFuncs.OnLoadEnd(Sender: TObject; const browser: ICefBrowser; const frame: ICefFrame; httpStatusCode: Integer);
+begin
+  EventRun(Sender, 'OnLoadEnd', [httpStatusCode], True);
 end;
 
 procedure THandlerFuncs.OnLoadError(Sender: TObject; const browser: ICefBrowser;
@@ -2078,18 +2093,9 @@ begin
 end;
 
 procedure THandlerFuncs.OnTitleChange(Sender: TObject; const browser: ICefBrowser;
-  const title: ustring; out Result: boolean);
-var
-  H: TPHPScriptEventHandler;
+  const title: ustring);
 begin
-  Result := True;
-
-  H := EventRun(Sender, 'OnTitleChange', [title, Result], False);
-  if H <> nil then
-  begin
-    Result := not H.ParamBool(2);
-    H.ClearArgs;
-  end;
+  EventRun(Sender, 'OnTitleChange', [title]);
 end;
 
 procedure THandlerFuncs.OnTooltip(Sender: TObject; const browser: ICefBrowser;
