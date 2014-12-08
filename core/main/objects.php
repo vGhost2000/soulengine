@@ -7,7 +7,7 @@ define('OS_WIN',1);
 define('OS_UNIX',2);
 define('OS_MACOS',3);
 define('__SYSTEM__',OS_WIN);
-
+    // БогоКостыль228
     switch(__SYSTEM__){
 		case OS_WIN: define('_BR_',chr(13).chr(10)); break;
 		case OS_UNIX: define('_BR_',chr(13)); break;
