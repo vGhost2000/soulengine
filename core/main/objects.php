@@ -11,7 +11,7 @@ define('__SYSTEM__',OS_WIN);
     switch(__SYSTEM__){
 		case OS_WIN: define('_BR_',chr(13).chr(10)); break;
 		case OS_UNIX: define('_BR_',chr(13)); break;
-		case OS_MACOS: defina('_BR_',chr(10)); break;
+		case OS_MACOS: define('_BR_',chr(10)); break;
 		default: define('_BR_',chr(13).chr(13));
     }
     
